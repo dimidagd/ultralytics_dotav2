@@ -924,7 +924,6 @@ class SettingsManager(dict):
         git_dir = get_git_dir()
         root = git_dir or Path()
         datasets_root = (root.parent if git_dir and is_dir_writeable(root.parent) else root).resolve()
-
         self.file = Path(file)
         self.version = version
         self.defaults = {

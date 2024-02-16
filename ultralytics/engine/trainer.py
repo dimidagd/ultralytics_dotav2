@@ -180,7 +180,6 @@ class BaseTrainer:
             world_size = 1  # default to device 0
         else:  # i.e. device='cpu' or 'mps'
             world_size = 0
-
         # Run subprocess if DDP training, else train normally
         if world_size > 1 and "LOCAL_RANK" not in os.environ:
             # Argument checks
@@ -219,7 +218,7 @@ class BaseTrainer:
         """Initializes and sets the DistributedDataParallel parameters for training."""
         torch.cuda.set_device(RANK)
         self.device = torch.device("cuda", RANK)
-        # LOGGER.info(f'DDP info: RANK {RANK}, WORLD_SIZE {world_size}, DEVICE {self.device}')
+        LOGGER.info(f'DDP info: RANK {RANK}, WORLD_SIZE {world_size}, DEVICE {self.device}')
         os.environ["NCCL_BLOCKING_WAIT"] = "1"  # set to enforce timeout
         dist.init_process_group(
             "nccl" if dist.is_nccl_available() else "gloo",
@@ -317,6 +316,9 @@ class BaseTrainer:
 
     def _do_train(self, world_size=1):
         """Train completed, evaluate and plot if specified by arguments."""
+        # print world size
+        print(f"World size: {world_size}")
+
         if world_size > 1:
             self._setup_ddp(world_size)
         self._setup_train(world_size)
