@@ -50,6 +50,7 @@ fi
 
 echo "Run on queue: $GPU"
 echo "Distributed gpu: $DDP"
+echo "Num gpus: $NGPU"
 echo "Num hosts: $NHOSTS"
 if [ "$GPU" = "gpua100" ]; then
     GPUMEM="select[gpu40gb]"
