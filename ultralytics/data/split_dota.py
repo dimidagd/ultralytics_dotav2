@@ -186,6 +186,11 @@ def crop_and_save(anno, windows, window_objs, im_dir, lb_dir):
                 formatted_coords = ["{:.6g}".format(coord) for coord in lb[1:]]
                 f.write(f"{int(lb[0])} {' '.join(formatted_coords)}\n")
 
+def process_anno(anno, crop_sizes, gaps, im_dir, lb_dir):
+    windows = get_windows(anno["ori_size"], crop_sizes, gaps)
+    window_objs = get_window_obj(anno, windows)
+    crop_and_save(anno, windows, window_objs, str(im_dir), str(lb_dir))
+    return True
 
 def split_images_and_labels(data_root, save_dir, split="train", crop_sizes=[1024], gaps=[200]):
     """
@@ -211,11 +216,21 @@ def split_images_and_labels(data_root, save_dir, split="train", crop_sizes=[1024
     lb_dir.mkdir(parents=True, exist_ok=True)
 
     annos = load_yolo_dota(data_root, split=split)
-    for anno in tqdm(annos, total=len(annos), desc=split):
-        windows = get_windows(anno["ori_size"], crop_sizes, gaps)
-        window_objs = get_window_obj(anno, windows)
-        crop_and_save(anno, windows, window_objs, str(im_dir), str(lb_dir))
+    import concurrent.futures
 
+
+    with concurrent.futures.ProcessPoolExecutor() as executor:
+        futures = []
+        progress_bar = tqdm(total=len(annos), desc=split)
+        for anno in annos:
+            future = executor.submit(process_anno, anno, crop_sizes, gaps, im_dir, lb_dir)
+            futures.append(future)
+        for future in futures:
+            future.add_done_callback(lambda p: progress_bar.update())
+        # Wait for all tasks to complete
+        concurrent.futures.wait(futures)
+        progress_bar.close()
+    print(f"Done processing split: {split}!")
 
 def split_trainval(data_root, save_dir, crop_size=1024, gap=200, rates=[1.0]):
     """
