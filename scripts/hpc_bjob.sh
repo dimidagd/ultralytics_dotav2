@@ -59,6 +59,14 @@ if [ "$DDP" = true ] ; then
     distributed_cmd="device=0,1"
 fi
 
+numgpus=NGPU
+batch_size=64	
+# Check if numgpus is equal to anything else than NGPU
+if [ "$numgpus" != "NGPU" ] ; then
+    echo "numgpus $numgpus"
+    # Calculate 128/numgpus and cast to int and divisible by the ngpus variable
+    batch_size=$((64 * numgpus))    
+fi
 
 # nvidia-smi --query-gpu=index,memory.used,utilization.gpu --format=csv -l 10 &
 # nvidia_smi_pid=$!
@@ -71,6 +79,6 @@ echo "Current working directory $PWD" && \
 cd ./examples && echo "Sourcing bashrc" && \
 source $HOME/.bashrc-yolo && echo "Running train python script" && \
 blaunch -z   "$List" \
-LOGLEVEL=INFO yolo obb train data=DOTAv2.0-patches.yaml model=yolov8n-obb.yaml pretrained=yolov8n-obb.pt epochs=100 imgsz=640 batch=128 $distributed_cmd \
+LOGLEVEL=INFO yolo obb train data=DOTAv2.0-patches.yaml model=yolov8n-obb.yaml pretrained=yolov8n-obb.pt epochs=100 imgsz=640 batch=$batch_size $distributed_cmd \
 2>&1 | tee  ../scripts/hpc_logs/EXPERIMENT.log
 ../scripts/cleanup.sh TEMPORARYDIR
