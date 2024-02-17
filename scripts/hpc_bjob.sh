@@ -31,7 +31,7 @@ echo "Preparing to run hpc script"
 # Function to be executed when the Python script exits
 function cleanup {
     echo "Python script terminated. Exiting..."
-    # kill $nvidia_smi_pid
+    kill $nvidia_smi_pid
     ../scripts/cleanup.sh TEMPORARYDIR
     exit 1
 }
@@ -68,8 +68,8 @@ if [ "$numgpus" != "NGPU" ] ; then
     batch_size=$((64 * numgpus))    
 fi
 
-# nvidia-smi --query-gpu=index,memory.used,utilization.gpu --format=csv -l 10 &
-# nvidia_smi_pid=$!
+nvidia-smi --query-gpu=index,memory.used,utilization.gpu --format=csv -l 10 &
+nvidia_smi_pid=$!
 echo "Hostname $HOSTNAME: and cuda devices: $CUDA_VISIBLE_DEVICES"
 
 echo "Loading stash from TEMPORARYDIR"
@@ -78,6 +78,6 @@ cd TEMPORARYDIR && \
 echo "Current working directory $PWD" && \
 cd ./examples && echo "Sourcing bashrc" && \
 source $HOME/.bashrc-yolo && echo "Running train python script" && \
-LOGLEVEL=INFO yolo obb train data=DOTAv2.0-patches.yaml model=yolov8n-obb.yaml pretrained=yolov8n-obb.pt epochs=100 imgsz=640 batch=$batch_size $distributed_cmd \
+LOGLEVEL=INFO yolo obb train data=DOTAv2.0-patches.yaml model=yolov8n-obb.yaml pretrained=yolov8n-obb.pt epochs=100 save_period=1 name=obb_hpc imgsz=640 batch=$batch_size $distributed_cmd \
 2>&1 | tee  ../scripts/hpc_logs/EXPERIMENT.log
 ../scripts/cleanup.sh TEMPORARYDIR
