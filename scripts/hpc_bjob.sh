@@ -71,7 +71,7 @@ batch_size=42
 if [ "$DDP" = true ] ; then
     echo "numgpus $num"
     # Calculate 128/numgpus and cast to int and divisible by the ngpus variable
-    batch_size=$((45 * 1))    
+    batch_size=$((45 * num))    
 fi
 
 # nvidia-smi --query-gpu=index,memory.used,utilization.gpu --format=csv -l 10 &
@@ -82,7 +82,7 @@ echo "Loading stash from TEMPORARYDIR"
 ./load_stash.sh TEMPORARYDIR && \
 cd TEMPORARYDIR && \
 echo "Current working directory $PWD" && \
-cd ./examples && echo "Sourcing bashrc" && \
+echo "Sourcing .bashrc-yolo" && \
 source $HOME/.bashrc-yolo && echo "Running train python script" && \
 LOGLEVEL=INFO yolo obb train data=DOTAv2.0-patches.yaml exist_ok=True model=yolov8n-obb.yaml pretrained=yolov8n-obb.pt epochs=100 save_period=1 name=train-obb workers=8 imgsz=640 batch=$batch_size $distributed_cmd \
 2>&1 | tee  ../scripts/hpc_logs/EXPERIMENT.log
