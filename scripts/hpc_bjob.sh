@@ -42,7 +42,7 @@ DDP=false
 distributed_cmd=""
 
 
-numgpus=NGPU
+num=NGPU
 if [ "$DDP" = true ] ; then
     echo "DDP true"!
     # Get the list of nodes-addresses
@@ -56,10 +56,13 @@ if [ "$DDP" = true ] ; then
     # Set the port for the rendezvous protocol
     PORT=$((RANDOM % 101 + 29400))
     echo "Random rendev port $PORT"
-    # if numgpus=2, then distributed_cmd="device=0,1"
-    distributed_cmd="device=0,1"
-    # if numgpus=3, then distributed_cmd="device=0,1,2"
-    distributed_cmd="device=0,1,2"
+    # if num=2, then distributed_cmd="device=0,1"
+    if [ "$num" = 2 ] ; then
+        distributed_cmd="device=0,1"
+    fi
+    if [ "$num" = 3 ] ; then
+        distributed_cmd="device=0,1,2"
+    fi
 fi
 
 
