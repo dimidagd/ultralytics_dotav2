@@ -65,7 +65,7 @@ fi
 
 batch_size=64	
 # Check if numgpus is equal to anything else than NGPU
-if [ "$numgpus" != "NGPU" ] ; then
+if [ "$DDP" = true ] ; then
     echo "numgpus $numgpus"
     # Calculate 128/numgpus and cast to int and divisible by the ngpus variable
     batch_size=$((64 * numgpus))    
