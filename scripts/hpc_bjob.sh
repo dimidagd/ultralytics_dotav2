@@ -71,7 +71,7 @@ batch_size=42
 if [ "$DDP" = true ] ; then
     echo "numgpus $num"
     # Calculate 128/numgpus and cast to int and divisible by the ngpus variable
-    batch_size=$((42 * num))    
+    batch_size=$((64 * 1))    
 fi
 
 # nvidia-smi --query-gpu=index,memory.used,utilization.gpu --format=csv -l 10 &
