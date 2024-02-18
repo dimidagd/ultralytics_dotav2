@@ -28,4 +28,3 @@ create_symlink $currdir/../scripts/hpc_logs $temp_dir/scripts/
 create_symlink $currdir/../wandb $temp_dir/
 
 echo "Exiting, loading of stashed dir completed"
-

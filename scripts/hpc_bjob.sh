@@ -40,8 +40,7 @@ function cleanup {
 trap cleanup EXIT SIGINT SIGTERM
 DDP=false
 distributed_cmd=""
-
-
+NNODES=1
 num=NGPU
 if [ "$DDP" = true ] ; then
     echo "DDP true"!
@@ -63,15 +62,20 @@ if [ "$DDP" = true ] ; then
     if [ "$num" = 3 ] ; then
         distributed_cmd="device=0,1,2"
     fi
+    # If NNODES > 2 then multinode=true
+    if [ "$NNODES" -gt 1 ] ; then
+        distributed_cmd="$distributed_cmd ddp_multinode=True ddp_hostname=$HOSTNAME ddp_multinode_port=$PORT ddp_multinode_nnodes=$NNODES"
+    fi
+
 fi
 
 
-batch_size=2	
+batch_size=32
 # Check if numgpus is equal to anything else than NGPU
 if [ "$DDP" = true ] ; then
     echo "numgpus $num"
     # Calculate 128/numgpus and cast to int and divisible by the ngpus variable
-    batch_size=$((2 * num))    
+    batch_size=$((32 * num))
 fi
 
 # nvidia-smi --query-gpu=index,memory.used,utilization.gpu --format=csv -l 10 &
