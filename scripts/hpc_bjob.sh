@@ -84,6 +84,7 @@ cd TEMPORARYDIR && \
 echo "Current working directory $PWD" && \
 echo "Sourcing .bashrc-yolo" && \
 source $HOME/.bashrc-yolo && echo "Running train python script" && \
+blaunch -z   "$List" \
 LOGLEVEL=INFO yolo obb train data=DOTAv2.0-patches.yaml exist_ok=True model=yolov8n-obb.yaml pretrained=yolov8n-obb.pt epochs=100 save_period=1 name=train-obb workers=8 imgsz=1024 batch=$batch_size $distributed_cmd \
 2>&1 | tee  ../scripts/hpc_logs/EXPERIMENT.log
 ../scripts/cleanup.sh TEMPORARYDIR
