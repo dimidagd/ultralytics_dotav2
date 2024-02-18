@@ -9,7 +9,7 @@ NGPU=1
 NHOSTS=1
 EXPERIMENT=""
 use_bsub=true
-
+skip_git_check=false
 # Parse command line arguments
 while [[ $# -gt 0 ]]; do
   case "$1" in
@@ -28,6 +28,11 @@ while [[ $# -gt 0 ]]; do
     --expname)
       EXPERIMENT="$2"
       shift 2
+      ;;
+    # add flag to skip git check
+    --skipgit)
+      skip_git_check=true
+      shift
       ;;
     *)
       echo "Invalid argument: $1"
@@ -77,8 +82,8 @@ source .env
 set +a
 mkdir -p ../notebooks/runs/logs
 
-
-if [ "$use_bsub" = true ]; then
+# if use_bsub is true, and skip_git_check is equal to false, check if there are uncommitted changes
+if [ "$use_bsub" = true ] && [ "$skip_git_check" != true ]; then
 ([[ -z $(git status -s) ]] && \
 print_ok "No uncommitted changes" ) \
 || (print_failed "Changes detected below, please commit first" && git status -s && exit 1)
@@ -100,16 +105,16 @@ if [ "$use_bsub" = true ]; then
 source ./stash_src.sh && \
  (sed  "s:EXPERIMENT:$EXPERIMENT:g" hpc_bjob.sh | \
   sed  "s:num=NGPU:num=$NGPU:g" | \
+  sed  "s:num_gpus=NGPU:num_gpus=$NGPU:g" | \
   sed  "s:gpu_id:$GPU:g" | \
   sed  "s:selectgpumemory:$GPUMEM:g"| \
   sed  "s:TEMPORARYDIR:$temp_dir:g" | \
   sed  "s:GITCOMMIT:$gitcommit:g" | \
   sed "s:BSUB -n NCORES:BSUB -n $NCORES:g" | \
   sed "s/DDP=false/DDP=$DDP/g" | \
-  sed "s/ddp_hostname= ddp_multinode_port= ddp_multinode_nnodes=/ddp_hostname= ddp_multinode_port= ddp_multinode_nnodes$NHOSTS= /g" | \
   sed "s:NNODES=1:NNODES=$NHOSTS:g" | \
-  sed "s:SPANSETTING:$HOSTSET:g" | \
-  bsub)
+  sed "s:SPANSETTING:$HOSTSET:g" > BJOBSCRIPT.sh \
+  && bsub < BJOBSCRIPT.sh)
 else
 read -p "Enter the batch size: " BATCHSIZE
    export gitcommit=$(git rev-parse HEAD) && \
