@@ -15,7 +15,7 @@
 ### -- set the email address --
 # please uncomment the following line and put in your e-mail address,
 # if you want to receive e-mail notifications on a non-default address
-#BSUB -u pgrigor22@gmail.com
+#BSUB -u dimidagd@gmail.com
 ### -- send notification at start --
 #BSUB -B
 ### -- send notification at completion--
@@ -41,7 +41,9 @@ trap cleanup EXIT SIGINT SIGTERM
 DDP=false
 distributed_cmd=""
 NNODES=1
-num=NGPU
+num_gpus=NGPU
+batch_size=32
+
 if [ "$DDP" = true ] ; then
     echo "DDP true"!
     # Get the list of nodes-addresses
@@ -55,33 +57,28 @@ if [ "$DDP" = true ] ; then
     # Set the port for the rendezvous protocol
     PORT=$((RANDOM % 101 + 29400))
     echo "Random rendev port $PORT"
-    # if num=2, then distributed_cmd="device=0,1"
-    if [ "$num" = 2 ] ; then
+    if [ "$num_gpus" = 1 ] ; then
+        distributed_cmd="device=0"
+    fi
+    if [ "$num_gpus" = 2 ] ; then
         distributed_cmd="device=0,1"
     fi
-    if [ "$num" = 3 ] ; then
+    if [ "$num_gpus" = 3 ] ; then
         distributed_cmd="device=0,1,2"
     fi
     # If NNODES > 2 then multinode=true
     if [ "$NNODES" -gt 1 ] ; then
         distributed_cmd="$distributed_cmd ddp_multinode=True ddp_hostname=$HOSTNAME ddp_multinode_port=$PORT ddp_multinode_nnodes=$NNODES"
     fi
-
+    # Calculate 64* num_gpus and cast to int and divisible by the ngpus variable
+    echo "numgpus $num_gpus"
+    batch_size=$((32 * num_gpus))
+    echo "Batch size $batch_size"
 fi
 
-
-batch_size=32
-# Check if numgpus is equal to anything else than NGPU
-if [ "$DDP" = true ] ; then
-    echo "numgpus $num"
-    # Calculate 128/numgpus and cast to int and divisible by the ngpus variable
-    batch_size=$((32 * num))
-fi
-
-# nvidia-smi --query-gpu=index,memory.used,utilization.gpu --format=csv -l 10 &
-# nvidia_smi_pid=$!
 echo "Hostname $HOSTNAME: and cuda devices: $CUDA_VISIBLE_DEVICES"
 
+date_time=$(date '+%Y%m%d_%H%M%S')
 echo "Loading stash from TEMPORARYDIR"
 ./load_stash.sh TEMPORARYDIR && \
 cd TEMPORARYDIR && \
@@ -89,8 +86,6 @@ echo "Current working directory $PWD" && \
 echo "Sourcing .bashrc-yolo" && \
 source $HOME/.bashrc-yolo && echo "Running train python script" && \
 blaunch -z   "$List" \
-LOGLEVEL=INFO yolo obb train data=DOTAv2.0-patches.yaml exist_ok=True model=yolov8n-obb.yaml pretrained=yolov8n-obb.pt epochs=100 save_period=1 name=train-obb workers=8 imgsz=1024 batch=$batch_size $distributed_cmd \
+LOGLEVEL=INFO yolo obb train data=DOTAv2.0-patches.yaml exist_ok=True model=yolov8n-obb.yaml pretrained=yolov8n-obb.pt epochs=100 save_period=1 name=train-obb-$date_time workers=8 imgsz=1024 batch=$batch_size $distributed_cmd \
 2>&1 | tee  ../scripts/hpc_logs/EXPERIMENT.log
 ../scripts/cleanup.sh TEMPORARYDIR
-
-# Monitor job with $ bnvtop JOBID
