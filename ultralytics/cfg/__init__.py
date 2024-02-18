@@ -133,6 +133,8 @@ CFG_INT_KEYS = (
     "workspace",
     "nbs",
     "save_period",
+    "ddp_multinode_port",
+    "ddp_multinode_nnodes"
 )
 CFG_BOOL_KEYS = (
     "save",
