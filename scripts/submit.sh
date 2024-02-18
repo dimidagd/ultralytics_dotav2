@@ -80,7 +80,7 @@ mkdir -p ../notebooks/runs/logs
 
 if [ "$use_bsub" = true ]; then
 ([[ -z $(git status -s) ]] && \
-print_ok "No uncommited changes" ) \
+print_ok "No uncommitted changes" ) \
 || (print_failed "Changes detected below, please commit first" && git status -s && exit 1)
 fi
 NCORES=$(($NGPU * 7 * $NHOSTS))
@@ -105,10 +105,9 @@ source ./stash_src.sh && \
   sed  "s:TEMPORARYDIR:$temp_dir:g" | \
   sed  "s:GITCOMMIT:$gitcommit:g" | \
   sed "s:BSUB -n NCORES:BSUB -n $NCORES:g" | \
-  sed 's/\+\+loader\.num_workers=NWORKERS //' | \
   sed "s/DDP=false/DDP=$DDP/g" | \
-  sed "s/-m torch.distributed.run/-m torch.distributed.run $STANDALONE /g" | \
-  sed "s/--nnodes=NNODES --nproc-per-node=NPROCPERNODE/--nnodes=$NHOSTS --nproc-per-node=$NGPU/g" | \
+  sed "s/ddp_hostname= ddp_multinode_port= ddp_multinode_nnodes=/ddp_hostname= ddp_multinode_port= ddp_multinode_nnodes$NHOSTS= /g" | \
+  sed "s:NNODES=1:NNODES=$NHOSTS:g" | \
   sed "s:SPANSETTING:$HOSTSET:g" | \
   bsub)
 else
@@ -123,9 +122,7 @@ source ./stash_src.sh && \
   sed  "s:GITCOMMIT:$gitcommit:g" | \
   sed "s:BSUB -n NCORES:BSUB -n $NCORES:g" | \
   sed "s/DDP=false/DDP=$DDP/g" | \
-  sed "s/--nnodes=NNODES --nproc-per-node=NPROCPERNODE/--nnodes=$NHOSTS --nproc-per-node=$NGPU/g" | \
-  sed 's/\+\+loader\.num_workers=NWORKERS/\+\+loader\.num_workers=BATCHSIZE \+\+loader\.batch_size=BATCHSIZE/g' | \
-  sed  "s:BATCHSIZE:$BATCHSIZE:g" | \
+  sed  "s:batch_size=32:batch_size=$BATCHSIZE:g" | \
   sed '/blaunch -z   "$List"/d' | \
   bash)
 fi
