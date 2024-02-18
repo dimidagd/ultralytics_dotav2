@@ -62,7 +62,7 @@ def generate_ddp_command(world_size, trainer):
     dist_cmd = "torch.distributed.run" if TORCH_1_9 else "torch.distributed.launch"
     port = find_free_network_port()
     cmd = [sys.executable, "-m", dist_cmd, "--nproc_per_node", f"{world_size}", "--master_port", f"{port}", file]
-    
+
     # Redefine the command if using MultiNode training
     if trainer.args.ddp_multinode: # parse from trainer
         hostname = trainer.args.ddp_multinode_hostname # parse from trainer
