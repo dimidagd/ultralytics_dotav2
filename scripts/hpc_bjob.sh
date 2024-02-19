@@ -72,16 +72,16 @@ if [ "$DDP" = true ] ; then
     fi
     # Calculate 64* num_gpus and cast to int and divisible by the ngpus variable
     echo "numgpus $num_gpus"
-    batch_size=$((32 * num_gpus))
+    batch_size=$((batch_size * num_gpus))
     echo "Batch size $batch_size"
 fi
 
 echo "Hostname $HOSTNAME: and cuda devices: $CUDA_VISIBLE_DEVICES"
 
 pretrained=False
-multi_scale=True
+multi_scale=False
 inputsz=640
-dataset=DOTAv2.0-patches
+dataset=DOTAv2.0-patches-ship
 basemodel=yolov8n-obb
 date_time=$(date '+%Y%m%d_%H%M%S')
 
@@ -92,6 +92,6 @@ echo "Current working directory $PWD" && \
 echo "Sourcing .bashrc-yolo" && \
 source $HOME/.bashrc-yolo && echo "Running train python script" && \
 blaunch -z   "$List" \
-LOGLEVEL=INFO yolo obb train data=$dataset.yaml exist_ok=True model=$basemodel.yaml imgsz=$inputsz pretrained=$pretrained multi_scale=$multi_scale epochs=100 save_period=1 name=$basemodel-$dataset-pre-trained-$pretrained-multi_scale-$multi_scale-$date_time workers=8 batch=$batch_size $distributed_cmd \
+LOGLEVEL=INFO yolo obb train data=$dataset.yaml exist_ok=True model=$basemodel.yaml imgsz=$inputsz pretrained=$pretrained multi_scale=$multi_scale epochs=100 save_period=5 name=$basemodel-$dataset-pre-trained-$pretrained-multi_scale-$multi_scale-$date_time workers=8 batch=$batch_size $distributed_cmd \
 2>&1 | tee  ../scripts/hpc_logs/EXPERIMENT.log
 ../scripts/cleanup.sh TEMPORARYDIR

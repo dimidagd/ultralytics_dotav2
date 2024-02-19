@@ -118,15 +118,17 @@ source ./stash_src.sh && \
 else
 read -p "Enter the batch size: " BATCHSIZE
    export gitcommit=$(git rev-parse HEAD) && \
-source ./stash_src.sh && \
+source ./stash_src.sh && export WAND_MODE=offline && \
  (sed  "s:EXPERIMENT:$EXPERIMENT:g" hpc_bjob.sh | \
   sed  "s:num=NGPU:num=$NGPU:g" | \
+  sed  "s:num_gpus=NGPU:num_gpus=$NGPU:g" | \
   sed  "s:gpu_id:$GPU:g" | \
   sed  "s:selectgpumemory:$GPUMEM:g"| \
   sed  "s:TEMPORARYDIR:$temp_dir:g" | \
   sed  "s:GITCOMMIT:$gitcommit:g" | \
   sed "s:BSUB -n NCORES:BSUB -n $NCORES:g" | \
   sed "s/DDP=false/DDP=$DDP/g" | \
+  sed "s:NNODES=1:NNODES=$NHOSTS:g" | \
   sed  "s:batch_size=32:batch_size=$BATCHSIZE:g" | \
   sed '/blaunch -z   "$List"/d' | \
   bash)
