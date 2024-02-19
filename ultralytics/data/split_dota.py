@@ -192,7 +192,31 @@ def process_anno(anno, crop_sizes, gaps, im_dir, lb_dir):
     crop_and_save(anno, windows, window_objs, str(im_dir), str(lb_dir))
     return True
 
-def split_images_and_labels(data_root, save_dir, split="train", crop_sizes=[1024], gaps=[200]):
+def apply_mapping(annos, mapping):
+    """
+    Apply mapping to the labels.
+
+    Args:
+        annos (List[dict]): The list of annotations.
+        mapping (dict): The mapping dict from original indexes to final indexes eg {0:1}.
+    """
+    new_annos = []
+    for annot in annos:
+        array = annot['label']
+        # Create a boolean mask where the first column is 0, 2, 5, or 7
+        mask = np.isin(array[:, 0], list(mapping.keys()))
+        # Apply the mask to the array
+        filtered_array = array[mask]
+        # Apply the mapping to the first column of the array
+        if filtered_array.shape[0] > 0:
+            filtered_array[:, 0] = np.vectorize(mapping.get)(filtered_array[:, 0])
+            annot['label'] = filtered_array
+            new_annos.append(annot)
+        else:
+            new_annos.append([])
+    return new_annos
+
+def split_images_and_labels(data_root, save_dir, split="train", crop_sizes=[1024], gaps=[200], mapping=None):
     """
     Split both images and labels.
 
@@ -216,6 +240,10 @@ def split_images_and_labels(data_root, save_dir, split="train", crop_sizes=[1024
     lb_dir.mkdir(parents=True, exist_ok=True)
 
     annos = load_yolo_dota(data_root, split=split)
+
+    # Apply mapping of original labels to target labels, useful when
+    if mapping:
+        annos = apply_mapping(annos, mapping)
     import concurrent.futures
 
 
@@ -232,7 +260,7 @@ def split_images_and_labels(data_root, save_dir, split="train", crop_sizes=[1024
         progress_bar.close()
     print(f"Done processing split: {split}!")
 
-def split_trainval(data_root, save_dir, crop_size=1024, gap=200, rates=[1.0]):
+def split_trainval(data_root, save_dir, crop_size=1024, gap=200, rates=[1.0], mapping=None):
     """
     Split train and val set of DOTA.
 
@@ -259,7 +287,7 @@ def split_trainval(data_root, save_dir, crop_size=1024, gap=200, rates=[1.0]):
         crop_sizes.append(int(crop_size / r))
         gaps.append(int(gap / r))
     for split in ["train", "val"]:
-        split_images_and_labels(data_root, save_dir, split, crop_sizes, gaps)
+        split_images_and_labels(data_root, save_dir, split, crop_sizes, gaps, mapping=mapping)
 
 
 def split_test(data_root, save_dir, crop_size=1024, gap=200, rates=[1.0]):
