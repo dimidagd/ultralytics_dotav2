@@ -78,6 +78,10 @@ fi
 
 echo "Hostname $HOSTNAME: and cuda devices: $CUDA_VISIBLE_DEVICES"
 
+pretrained=False
+multi_scale=True
+inputsz=640
+
 date_time=$(date '+%Y%m%d_%H%M%S')
 echo "Loading stash from TEMPORARYDIR"
 ./load_stash.sh TEMPORARYDIR && \
@@ -86,6 +90,6 @@ echo "Current working directory $PWD" && \
 echo "Sourcing .bashrc-yolo" && \
 source $HOME/.bashrc-yolo && echo "Running train python script" && \
 blaunch -z   "$List" \
-LOGLEVEL=INFO yolo obb train data=DOTAv2.0-patches.yaml exist_ok=True model=yolov8n-obb.yaml pretrained=yolov8n-obb.pt epochs=100 save_period=1 name=train-obb-$date_time workers=8 imgsz=1024 batch=$batch_size $distributed_cmd \
+LOGLEVEL=INFO yolo obb train data=DOTAv2.0-patches.yaml exist_ok=True model=yolov8n-obb.yaml inputsz=$inputsz pretrained=$pretrained multi_scale=$multi_scale epochs=100 save_period=1 name=yolov8n-obb-dotav2.0-patches-pre-trained-$pretrained-multi_scale-$multi_scale-$date_time workers=8 imgsz=640 batch=$batch_size $distributed_cmd \
 2>&1 | tee  ../scripts/hpc_logs/EXPERIMENT.log
 ../scripts/cleanup.sh TEMPORARYDIR
