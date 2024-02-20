@@ -9,6 +9,7 @@ NGPU=1
 NHOSTS=1
 EXPERIMENT=""
 use_bsub=true
+BATCHSIZE=32
 skip_git_check=false
 # Parse command line arguments
 while [[ $# -gt 0 ]]; do
@@ -27,6 +28,10 @@ while [[ $# -gt 0 ]]; do
       ;;
     --expname)
       EXPERIMENT="$2"
+      shift 2
+      ;;
+    --batch_size)
+      BATCHSIZE="$2"
       shift 2
       ;;
     # add flag to skip git check
@@ -113,6 +118,7 @@ source ./stash_src.sh && \
   sed "s:BSUB -n NCORES:BSUB -n $NCORES:g" | \
   sed "s/DDP=false/DDP=$DDP/g" | \
   sed "s:NNODES=1:NNODES=$NHOSTS:g" | \
+  sed  "s:batch_size=32:batch_size=$BATCHSIZE:g" | \
   sed "s:SPANSETTING:$HOSTSET:g" > BJOBSCRIPT.sh \
   && bsub < BJOBSCRIPT.sh)
 else

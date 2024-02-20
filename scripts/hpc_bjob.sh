@@ -91,7 +91,12 @@ cd TEMPORARYDIR && \
 echo "Current working directory $PWD" && \
 echo "Sourcing .bashrc-yolo" && \
 source $HOME/.bashrc-yolo && echo "Running train python script" && \
-blaunch -z   "$List" \
+if [[ "$DDP" = true ]]; then
+  blaunch -z   "$List" \
+fi
+# Calculate new learning rate based on batch size and 64
+lr=$(echo "scale=5; 0.01 * sqrt($batch_size / 64)" | bc) # default lr for adam in ultralytics yolov8 is 0.01 
+
 LOGLEVEL=INFO yolo obb train data=$dataset.yaml exist_ok=True model=$basemodel.yaml imgsz=$inputsz pretrained=$pretrained multi_scale=$multi_scale epochs=100 save_period=5 name=$basemodel-$dataset-pre-trained-$pretrained-multi_scale-$multi_scale-$date_time workers=8 batch=$batch_size $distributed_cmd \
 2>&1 | tee  ../scripts/hpc_logs/EXPERIMENT.log
 ../scripts/cleanup.sh TEMPORARYDIR
