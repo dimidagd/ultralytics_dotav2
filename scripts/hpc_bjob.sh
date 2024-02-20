@@ -81,7 +81,7 @@ echo "Hostname $HOSTNAME: and cuda devices: $CUDA_VISIBLE_DEVICES"
 pretrained=False
 multi_scale=False
 inputsz=640
-dataset=xView
+dataset=xView-patches
 basemodel=yolov8n
 date_time=$(date '+%Y%m%d_%H%M%S')
 task=detect
@@ -97,7 +97,7 @@ source $HOME/.bashrc-yolo && echo "Running train python script"
 
 
 # Save the base command in a variable
-base_command="LOGLEVEL=INFO yolo $task train data=$dataset.yaml exist_ok=True lr0=$lr model=$basemodel.yaml imgsz=$inputsz pretrained=$pretrained multi_scale=$multi_scale epochs=100 save_period=5 name=$basemodel-$dataset-pre-trained-$pretrained-multi_scale-$multi_scale-$date_time workers=8 batch=$batch_size $distributed_cmd 2>&1 | tee  ../scripts/hpc_logs/EXPERIMENT.log"
+base_command="LOGLEVEL=INFO yolo $task train data=$dataset.yaml exist_ok=True lr0=$lr model=$basemodel.yaml imgsz=$inputsz pretrained=$pretrained multi_scale=$multi_scale epochs=100 save_period=5 name=$basemodel-$dataset-pre-trained-$pretrained-multi_scale-$multi_scale-$date_time workers=8 batch=$batch_size $distributed_cmd 2>&1 | tee  ./scripts/hpc_logs/EXPERIMENT.log"
 
 if [[ "$DDP" = true ]]; then
   blaunch -z "$List" -- $base_command
