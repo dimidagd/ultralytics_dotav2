@@ -93,10 +93,14 @@ echo "Loading stash from TEMPORARYDIR"
 cd TEMPORARYDIR && \
 echo "Current working directory $PWD" && \
 echo "Sourcing .bashrc-yolo" && \
-source $HOME/.bashrc-yolo && echo "Running train python script" && \
+source $HOME/.bashrc-yolo && echo "Running train python script" 
+
+
+# Save the base command in a variable
+base_command="LOGLEVEL=INFO yolo obb train data=$dataset.yaml exist_ok=True lr0=$lr model=$basemodel.yaml imgsz=$inputsz pretrained=$pretrained multi_scale=$multi_scale epochs=100 save_period=5 name=$basemodel-$dataset-pre-trained-$pretrained-multi_scale-$multi_scale-$date_time workers=8 batch=$batch_size $distributed_cmd 2>&1 | tee  ../scripts/hpc_logs/EXPERIMENT.log"
+
 if [[ "$DDP" = true ]]; then
-  blaunch -z   "$List" \
+  blaunch -z "$List" -- $base_command
+else
+  eval "$base_command"
 fi
-LOGLEVEL=INFO yolo obb train data=$dataset.yaml exist_ok=True lr0=$lr model=$basemodel.yaml imgsz=$inputsz pretrained=$pretrained multi_scale=$multi_scale epochs=100 save_period=5 name=$basemodel-$dataset-pre-trained-$pretrained-multi_scale-$multi_scale-$date_time workers=8 batch=$batch_size $distributed_cmd \
-2>&1 | tee  ../scripts/hpc_logs/EXPERIMENT.log
-../scripts/cleanup.sh TEMPORARYDIR
