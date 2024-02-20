@@ -203,7 +203,10 @@ def apply_mapping(annos, mapping):
     new_annos = []
     for annot in annos:
         array = annot['label']
-        # Create a boolean mask where the first column is 0, 2, 5, or 7
+        if array.ndim < 2:
+            print("Skipping empty label.")
+            new_annos.append([])
+            continue
         mask = np.isin(array[:, 0], list(mapping.keys()))
         # Apply the mask to the array
         filtered_array = array[mask]
@@ -213,6 +216,7 @@ def apply_mapping(annos, mapping):
             annot['label'] = filtered_array
             new_annos.append(annot)
         else:
+            print("Filtering for specific classes resulted in an empty label.")
             new_annos.append([])
     return new_annos
 
