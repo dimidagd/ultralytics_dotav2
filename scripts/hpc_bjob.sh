@@ -85,6 +85,9 @@ dataset=DOTAv2.0-patches-ship
 basemodel=yolov8n-obb
 date_time=$(date '+%Y%m%d_%H%M%S')
 
+# Calculate new learning rate based on batch size and 64
+lr=$(echo "scale=5; 0.01 * sqrt($batch_size / 64)" | bc) # default lr for adam in ultralytics yolov8 is 0.01 
+
 echo "Loading stash from TEMPORARYDIR"
 ./load_stash.sh TEMPORARYDIR && \
 cd TEMPORARYDIR && \
@@ -94,9 +97,6 @@ source $HOME/.bashrc-yolo && echo "Running train python script" && \
 if [[ "$DDP" = true ]]; then
   blaunch -z   "$List" \
 fi
-# Calculate new learning rate based on batch size and 64
-lr=$(echo "scale=5; 0.01 * sqrt($batch_size / 64)" | bc) # default lr for adam in ultralytics yolov8 is 0.01 
-
-LOGLEVEL=INFO yolo obb train data=$dataset.yaml exist_ok=True model=$basemodel.yaml imgsz=$inputsz pretrained=$pretrained multi_scale=$multi_scale epochs=100 save_period=5 name=$basemodel-$dataset-pre-trained-$pretrained-multi_scale-$multi_scale-$date_time workers=8 batch=$batch_size $distributed_cmd \
+LOGLEVEL=INFO yolo obb train data=$dataset.yaml exist_ok=True lr0=$lr model=$basemodel.yaml imgsz=$inputsz pretrained=$pretrained multi_scale=$multi_scale epochs=100 save_period=5 name=$basemodel-$dataset-pre-trained-$pretrained-multi_scale-$multi_scale-$date_time workers=8 batch=$batch_size $distributed_cmd \
 2>&1 | tee  ../scripts/hpc_logs/EXPERIMENT.log
 ../scripts/cleanup.sh TEMPORARYDIR
