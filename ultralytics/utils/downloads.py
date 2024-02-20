@@ -282,6 +282,7 @@ def safe_download(
     min_bytes=1e0,
     exist_ok=False,
     progress=True,
+    sha1sum=None,
 ):
     """
     Downloads files from a URL, with options for retrying, unzipping, and deleting the downloaded file.
@@ -327,6 +328,8 @@ def safe_download(
                     s = "sS" * (not progress)  # silent
                     r = subprocess.run(["curl", "-#", f"-{s}L", url, "-o", f, "--retry", "3", "-C", "-"]).returncode
                     assert r == 0, f"Curl return value {r}"
+                    if sha1sum and sha1sum != checks.file_sha1(f):
+                        raise ValueError(f"SHA-1 mismatch for {f}, retrying...")
                 else:  # urllib download
                     method = "torch"
                     if method == "torch":
@@ -358,13 +361,18 @@ def safe_download(
 
     if unzip and f.exists() and f.suffix in ("", ".zip", ".tar", ".gz", ".tgz"):
         from zipfile import is_zipfile
-
+        # Safety feature, check for sha1sum if provided
+        if sha1sum and sha1sum != checks.file_sha1(f):
+            raise ValueError(f"SHA-1 mismatch for {f}, skipping extraction...")
         unzip_dir = (dir or f.parent).resolve()  # unzip to dir if provided else unzip in place
         if is_zipfile(f):
             unzip_dir = unzip_file(file=f, path=unzip_dir, exist_ok=exist_ok, progress=progress)  # unzip
         elif f.suffix in (".tar", ".gz", ".tgz"):
             LOGGER.info(f"Unzipping {f} to {unzip_dir}...")
-            subprocess.run(["tar", "xf" if f.suffix == ".tar" else "xfz", f, "--directory", unzip_dir], check=True)
+            # Create the command with pv (pipe viewer) to show progress
+            command = ["pv", str(f), "|", "tar", "xf" if f.suffix == ".tar" else "xvfz" if f.suffix == ".tgz" else "xfz", "-", "--directory", str(unzip_dir), ">", "/dev/null"]
+            # Run the command
+            subprocess.run(" ".join(command), shell=True, check=True)
         if delete:
             f.unlink()  # remove zip
         return unzip_dir
