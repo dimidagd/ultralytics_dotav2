@@ -653,6 +653,7 @@ def autosplit(path=DATASETS_DIR / "coco8/images", weights=(0.9, 0.1, 0.0), annot
                 f.write(f"./{img.relative_to(path.parent).as_posix()}" + "\n")  # add image to txt file
 
 
+
 def load_dataset_cache_file(path):
     """Load an Ultralytics *.cache dictionary from path."""
     import gc
@@ -674,3 +675,28 @@ def save_dataset_cache_file(prefix, path, x, version):
         LOGGER.info(f"{prefix}New cache created: {path}")
     else:
         LOGGER.warning(f"{prefix}WARNING ⚠️ Cache directory {path.parent} is not writeable, cache not saved.")
+
+
+def process_xview_feature(args):
+    """Process one feature from xView dataset."""
+    feature, path, xview_class2index, shapes, xyxy2xywhn, labels = args
+    p = feature['properties']
+    if p['bounds_imcoords']:
+        id = p['image_id']
+        file = path / 'train_images' / id
+        if file.exists():
+            try:
+                box = np.array([int(num) for num in p['bounds_imcoords'].split(",")])
+                assert box.shape[0] == 4, f'incorrect box shape {box.shape[0]}'
+                cls = p['type_id']
+                cls = xview_class2index[int(cls)]  # xView class to 0-60
+                assert 59 >= cls >= 0, f'incorrect class index {cls}'
+
+                # Write YOLO label
+                if id not in shapes:
+                    shapes[id] = Image.open(file).size
+                box = xyxy2xywhn(box[None].astype(np.float64), w=shapes[id][0], h=shapes[id][1], clip=True)
+                with open((labels / id).with_suffix('.txt'), 'a') as f:
+                    f.write(f"{cls} {' '.join(f'{x:.6f}' for x in box[0])}\n")  # write label.txt
+            except Exception as e:
+                print(f'WARNING: skipping one label for {file}: {e}')
