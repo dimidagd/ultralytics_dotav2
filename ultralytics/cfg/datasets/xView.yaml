@@ -127,8 +127,8 @@ download: |
               '1e030f1b2b35cdb8deb408a6d227a6713c32f7ba'] # val images
 
   from ultralytics.utils.downloads import safe_download
-  #for url, filesha1sum in zip(urls,sha1sums):
-  #  safe_download(url, dir=dir, sha1sum=filesha1sum)
+  for url, filesha1sum in zip(urls,sha1sums):
+    safe_download(url, dir=dir, sha1sum=filesha1sum)
 
   # Convert labels
   convert_labels(dir / 'xView_train.geojson')
