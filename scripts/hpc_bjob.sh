@@ -10,8 +10,8 @@
 #BSUB -gpu "num=NGPU:mode=exclusive_process:aff=yes"
 ### -- set walltime limit: hh:mm --  maximum 24 hours for GPU-queues right now
 #BSUB -W 24:00
-# request 8GB of system-memory
-#BSUB -R "rusage[mem=8GB] SPANSETTING"
+# request 5GB of system-memory
+#BSUB -R "rusage[mem=5GB] SPANSETTING"
 ### -- set the email address --
 # please uncomment the following line and put in your e-mail address,
 # if you want to receive e-mail notifications on a non-default address
@@ -43,7 +43,7 @@ distributed_cmd=""
 NNODES=1
 num_gpus=NGPU
 batch_size=32
-
+distributed_cmd="device=0"
 if [ "$DDP" = true ] ; then
     echo "DDP true"!
     # Get the list of nodes-addresses
@@ -86,7 +86,7 @@ basemodel=yolov8n
 date_time=$(date '+%Y%m%d_%H%M%S')
 task=detect
 # Calculate new learning rate based on batch size and 64
-lr=$(echo "scale=5; 0.01 * sqrt($batch_size / 64)" | bc) # default lr for adam in ultralytics yolov8 is 0.01 
+ # default lr for adam in ultralytics yolov8 is 0.01 
 
 echo "Loading stash from TEMPORARYDIR"
 ./load_stash.sh TEMPORARYDIR && \
@@ -94,10 +94,22 @@ cd TEMPORARYDIR && \
 echo "Current working directory $PWD" && \
 echo "Sourcing .bashrc-yolo" && \
 source $HOME/.bashrc-yolo && echo "Running train python script" 
+optimizer=Adam
+# base lr is 0.01 if optimizer is SDG, 0.001 if Adam, else 0.01
+if [ "$optimizer" = "SGD" ] ; then
+    lr=0.01
+elif [ "$optimizer" = "Adam" ] ; then
+    lr=0.001
+else
+    lr=0.01
+fi
+
+lr=$(echo "scale=5; $lr * sqrt($batch_size / 64)" | bc)
 
 
+name=$task-$basemodel-$dataset-pre-trained-$pretrained-multi_scale-$multi_scale-$optimizer-$date_time
 # Save the base command in a variable
-base_command="LOGLEVEL=INFO yolo $task train data=$dataset.yaml exist_ok=True lr0=$lr model=$basemodel.yaml imgsz=$inputsz pretrained=$pretrained multi_scale=$multi_scale epochs=100 save_period=5 name=$basemodel-$dataset-pre-trained-$pretrained-multi_scale-$multi_scale-$date_time workers=8 batch=$batch_size $distributed_cmd 2>&1 | tee  ./scripts/hpc_logs/EXPERIMENT.log"
+base_command="LOGLEVEL=INFO yolo $task train optimizer=$optimizer data=$dataset.yaml exist_ok=True lr0=$lr model=$basemodel.yaml imgsz=$inputsz pretrained=$pretrained multi_scale=$multi_scale epochs=100 save_period=5 name=$name workers=8 batch=$batch_size $distributed_cmd 2>&1 | tee  ./scripts/hpc_logs/EXPERIMENT.log"
 
 if [[ "$DDP" = true ]]; then
   blaunch -z "$List" -- $base_command
