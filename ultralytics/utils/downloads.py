@@ -367,7 +367,8 @@ def safe_download(
         elif f.suffix in (".tar", ".gz", ".tgz"):
             LOGGER.info(f"Unzipping {f} to {unzip_dir}...")
             # Create the command with pv (pipe viewer) to show progress
-            command = ["pv", str(f), "|", "tar", "xf" if f.suffix == ".tar" else "xvfz" if f.suffix == ".tgz" else "xfz", "-", "--directory", str(unzip_dir), ">", "/dev/null"]
+            compressed = [] if f.suffix==".tar" else ["pigz", "-dc","|"]
+            command = ["pv", str(f), "|"] + compressed + ["tar", "xf", "-", "--directory", str(unzip_dir)]
             # Run the command
             subprocess.run(" ".join(command), shell=True, check=True)
         if delete:
