@@ -9,9 +9,9 @@
 #     └── xView  ← downloads here (20.7 GB)
 
 # Train/val/test sets as 1) dir: path/to/imgs, 2) file: path/to/imgs.txt, or 3) list: [path/to/imgs1, path/to/imgs2, ..]
-path: ../datasets/xView-patches # dataset root dir
-train: images/autosplit_train.txt # train images (relative to 'path') 90% of 847 train images
-val: images/autosplit_val.txt # train images (relative to 'path') 10% of 847 train images
+path: ../datasets/xView # dataset root dir
+train: images/train # train images (relative to 'path') 90% of 847 train images
+val: images/val # train images (relative to 'path') 10% of 847 train images
 
 # Classes
 names:
@@ -117,11 +117,10 @@ download: |
       mapped_values = list(tqdm(pool.imap_unordered(process_xview_feature, args,chunksize=300), total=len(args)))
 
   # Check links manually from https://challenge.xviewdataset.org, need account!
-  final_dir = Path(yaml['path'])  # dataset root dir
-  dir = Path('/tmp')
-  urls = ['https://d307kc0mrhucc3.cloudfront.net/train_labels.tgz?Expires=1708456709&Signature=m7DVDg3V-eNlKJdavLw3Vnvft2cWlijfwT~EmGqCO9nIWSNm8M433WvoKfIWPy23ctFnrog7GbLblxCNvak4NxD9pNAVbhRIgfgGpaL9032zNF66hAPb6SchBvAkHHDfjwPjvHQQswZiMIYL8643-00f68RTZUzoX2n3cBPXoYPavhVYxhWoMTzcunDFhsCAOmRMLqfaXpwbvuxe7ndjCplYCBM9T4Mn0jbgFDZdXj7Tl7k0X988vZEx4dc-qfoIid-SKJLJW8EFHGkj5iNL3T5noaD5pPhTInmf3ieZlMjntp6jRFRcl3DuY2IUO2UVgzg9~RmvRuAFhaHBb9Q69A__&Key-Pair-Id=APKAIKGDJB5C3XUL2DXQ',  # train labels
-          'https://d307kc0mrhucc3.cloudfront.net/train_images.tgz?Expires=1708456709&Signature=O1itwE458-1YE8sJ7~8qP6K0wbIWjxU4IjqHJ0SEAgJz-s2wQUO-xD6PXeQUNc~TYPyu7~ZHQLJm2VLdx1lqShgfKCflIXzzsDK3vd~G3E7TaDUiJ7tvxwwX8r1Wolg0Q2e~f2BaVWlGPngcvUWZixqyQ0mOxpWY6K59Ll4BQZpcHtGhGTQBHYqS1HSN9uLz3OXvTvehI3nNFKWWWn4X5pgABDtrTCWpDmF3DZrIcPwT~EDMuHgQtYsZe0glnWNw9dSPtwoiF7EI2PTYQU5eHEjMOrRR7OfhB6qqo0hrV8gNCmBOSj9gAa8yBrXie07T-NOrN1uPWZH7x1VsFAdhNg__&Key-Pair-Id=APKAIKGDJB5C3XUL2DXQ',  # 15G, 847 train images
-          'https://d307kc0mrhucc3.cloudfront.net/val_images.tgz?Expires=1708462101&Signature=i2iZ-XNfbZTj48XfigOvacU~3lFYWEnN7VR4KNeqDBm4HU5HRWWGlkoKs7YMy3trLnXNfL5ItUJWGmldehJjk2tIQidZqT~-TFCyxb8MsdRT3mcI58FGZxlvJnkU40-giq~ZZQzXqLFtDfu3BeMkg0Wq5OMRt18-sVlQUMiAb27r6kFqBJV9yxBW~H8xMyU4qnkaRoqsxz1tM9YGgA0OpDbLSB-550Ag8Ue6CaAMUrCPIejOCWm06AgK6PBkQ27lb9PqOeiRvcCyJN6YSSYn6iSgYmvzBwKF0mvJOPqB3vh8bl2ceIiw-xcJ5~KK~AC2qRh3z0ManG1oclquxoD9jg__&Key-Pair-Id=APKAIKGDJB5C3XUL2DXQ']  # 5G, 282 val images (no labels)
+  dir =  Path(yaml['path'])
+  urls = ['https://d307kc0mrhucc3.cloudfront.net/train_labels.tgz?Expires=1708531555&Signature=BD-NWk3JRlIOexbxRctzr7uvergvH1WAyQKry3Vj9MUAwGkdg2Z9iyiocaNs148weuKimwsnWHv1cVLoTOlUu28i8SZUImcTJdVQBI4AHrykzdx~P7X6UQIypVWYHhXxhI1du~~JH3YLJHie2UzKvLZJRYfekOiu1a3k-AVgCT6MyPWQ1Zy8eU8BHXI06xRS-20dL0p6BTFRbhMRCUePPMFgSXUVCyg5KHVuBpxpx~AGfz2WgaUllIKKO6Tgd5ZLAzKXVS9n5qde6Na7~JJ8gC24awm5zpXUpvI~MiTrevsGpvjm-fzMlvRAac4eM2uYYMTQ6eTNXTWUF-~YD45FNQ__&Key-Pair-Id=APKAIKGDJB5C3XUL2DXQ',  # train labels
+          'https://d307kc0mrhucc3.cloudfront.net/train_images.tgz?Expires=1708531555&Signature=GH25N63AVJOvlZqL--HS5tfVlB5WEo3CwMwCfQYBSrKouRY6TF4pSAx7eLsO5KH3X8J~nHlwTaXmwK7Pl2aPDVlg96MlVAxfAJEYOSefKOAXxVBHKDwbp8~l3hDfhrF7E3L6kSiU8aMeJ5bNZgbNPf56SQJllD6zluRxO1yGYfmF8cF-riDvK0f1IK3W8boCkfqbgPWbj8Hos2YOBgv~FL-GwpXdCA3BGbwxId64NgTmKSYAwXRm-bZWBvJxRBe9evGL4qDbWsdm2Rv2DB-rrQBNoTU36Ojd9K6g2YXjrLBMhdSpA4Kq~QSrn1dXwCjqEQGElUd-APp3--7AHEdYSQ__&Key-Pair-Id=APKAIKGDJB5C3XUL2DXQ',  # 15G, 847 train images
+          'https://d307kc0mrhucc3.cloudfront.net/val_images.tgz?Expires=1708531555&Signature=gEMYfvbXkEFvqyKBZbqagCS3bBNnQQPAEh3xhf2tJlG42jJaQcKHnJVUcsa5O3mHsrw0A8bVSi-eBjOs65mxsoJ5zC1J7ecXQ7JuplzLr8RYtkoMwmJymqGrbr27Iu5wZ8y35rApD5yZMQNWUU7oIQa77p5FkoJ1aHG9bTm8vhzRbk6ZikHY-ZL-4C1y9mSALPCMXOYWaDmxfNBuw4ix-k4l5FuoB44jCmT~LgnSS3q~sbVWAFb2gIiCp3PIobISpwEP21Nuv7SqHAVcv4q5M4H9x2dVofY6htWfMmXUTDGCtfACT8OQ9LvsoDu-kVh0PdXZsB1qhAAFR7ag~6uALw__&Key-Pair-Id=APKAIKGDJB5C3XUL2DXQ']  # 5G, 282 val images (no labels)
   
   sha1sums = ['693abfe34beabcb1bb87242241e0d0e273c36f0c', # train labels
               '1cdd5af68ec3a696f696104efb4730928cde524e', # train images
@@ -130,29 +129,48 @@ download: |
   from ultralytics.utils.downloads import safe_download
   for url, filesha1sum in zip(urls,sha1sums):
     safe_download(url, dir=dir, sha1sum=filesha1sum)
-
+  print("Downloaded/unarchived xView data")
   # Convert labels
+  print("Converting labels")
   convert_labels(dir / 'xView_train.geojson')
-
+  print("Finished converting labels")
+  print("Moving images")
   # Move images
   images = Path(dir / 'images')
   images.mkdir(parents=True, exist_ok=True)
+  # Remove existing directories with shutil and rename existing directories
+  import shutil
+  # Remove existing train folder even if it doesnt exist
+  os.system('rm -rf ' + str(dir / 'images' / 'train'))
+  os.system('rm -rf ' + str(dir / 'images' / 'val'))
+  os.system('rm -rf ' + str(dir / 'images' / 'test'))
+  # Rename xView train_images to train
   Path(dir / 'train_images').rename(dir / 'images' / 'train')
-  Path(dir / 'val_images').rename(dir / 'images' / 'val')
-
-  # Split
+  # Rename xView val_images to test
+  Path(dir / 'val_images').rename(dir / 'images' / 'test_nolabels')
+  # Create val folder
+  Path(dir / 'images'/ 'val').mkdir(parents=True, exist_ok=True)
+  Path(dir / 'labels' / 'val').mkdir(parents=True, exist_ok=True)
+  Path(dir / 'images'/ 'train').mkdir(parents=True, exist_ok=True)
+  Path(dir / 'labels' / 'train').mkdir(parents=True, exist_ok=True)
+  
+  # Split train data into train,val splits since in xView val data have no labels
+  print("Split train data into train,val splits")
   autosplit(dir / 'images' / 'train')
 
-  # Patches
-  from ultralytics.data.split_dota import split_trainval, split_test
-  from PIL import Image
-  Image.MAX_IMAGE_PIXELS = None # There is a security issue related to this.
-  # split train and val set, with labels.
-  print("Splitting train and val set to patches, with labels.")
-  split_trainval(
-      data_root=dir,
-      save_dir=final_dir,
-      rates=[0.5, 1.0, 1.5],    # multi-scale
-      gap=-200,
-  )
-  print("Finished splitting train and val set to patches.")
+  # Move images and labels to train, val folders.
+  for split in ['train', 'val']:    
+    with open(dir / 'images' / f'autosplit_{split}.txt') as f:
+        for line in f:
+            fp = Path(line.strip())
+            image_path = dir / 'images' / fp
+            final_image_path = dir / 'images' / split / fp.name
+            final_label_path = dir / 'labels' / split / fp.with_suffix('.txt').name
+            label = Path(dir / 'labels' / fp.with_suffix('.txt'))
+            if image_path.exists():
+              Path(image_path).rename(final_image_path)
+            if label.exists():
+              label.rename(final_label_path)
+            
+            
+  print("Finished moving images")
