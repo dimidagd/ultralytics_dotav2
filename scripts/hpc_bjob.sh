@@ -106,7 +106,6 @@ fi
 
 lr=$(echo "scale=5; $lr * sqrt($batch_size / 64)" | bc)
 
-
 name=$task-$basemodel-$dataset-pre-trained-$pretrained-multi_scale-$multi_scale-$optimizer-$date_time
 # Save the base command in a variable
 base_command="LOGLEVEL=INFO yolo $task train optimizer=$optimizer data=$dataset.yaml exist_ok=True lr0=$lr model=$basemodel.yaml imgsz=$inputsz pretrained=$pretrained multi_scale=$multi_scale epochs=100 save_period=5 name=$name workers=8 batch=$batch_size $distributed_cmd 2>&1 | tee  ./scripts/hpc_logs/EXPERIMENT.log"
