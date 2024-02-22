@@ -77,11 +77,15 @@ def load_yolo_dota(data_root, split="train"):
     im_files = glob(str(Path(data_root) / "images" / split / "*"))
     lb_files = img2label_paths(im_files)
     annos = []
-    for im_file, lb_file in zip(im_files, lb_files):
+    for im_file, lb_file in zip(im_files, lb_files): 
         w, h = exif_size(Image.open(im_file))
-        with open(lb_file) as f:
-            lb = [x.split() for x in f.read().strip().splitlines() if len(x)]
-            lb = np.array(lb, dtype=np.float32)
+        if Path(lb_file).exists(): # XXX: Mention in PR that this is needed for images without labels.
+            with open(lb_file) as f:
+                lb = [x.split() for x in f.read().strip().splitlines() if len(x)]
+                lb = np.array(lb, dtype=np.float32)
+        else:   # empty label
+            print(f"Empty label for {im_file}")
+            lb = np.array([], dtype=np.float32)
         annos.append(dict(ori_size=(h, w), label=lb, filepath=im_file))
     return annos
 
@@ -174,19 +178,19 @@ def crop_and_save(anno, windows, window_objs, im_dir, lb_dir):
 
         cv2.imwrite(str(Path(im_dir) / f"{new_name}.jpg"), patch_im)
         label = window_objs[i]
-        if len(label) == 0:
-            continue
-        label[:, 1::2] -= x_start
-        label[:, 2::2] -= y_start
-        label[:, 1::2] /= pw
-        label[:, 2::2] /= ph
+        if len(label) != 0: # Mention in PR that this is needed for images without labels as it generated an empty .txt file.
+            label[:, 1::2] -= x_start
+            label[:, 2::2] -= y_start
+            label[:, 1::2] /= pw
+            label[:, 2::2] /= ph
 
         with open(Path(lb_dir) / f"{new_name}.txt", "w") as f:
             for lb in label:
                 formatted_coords = ["{:.6g}".format(coord) for coord in lb[1:]]
                 f.write(f"{int(lb[0])} {' '.join(formatted_coords)}\n")
 
-def process_anno(anno, crop_sizes, gaps, im_dir, lb_dir):
+def process_anno(args):
+    anno, crop_sizes, gaps, im_dir, lb_dir = args
     windows = get_windows(anno["ori_size"], crop_sizes, gaps)
     window_objs = get_window_obj(anno, windows)
     crop_and_save(anno, windows, window_objs, str(im_dir), str(lb_dir))
@@ -248,21 +252,19 @@ def split_images_and_labels(data_root, save_dir, split="train", crop_sizes=[1024
     # Apply mapping of original labels to target labels, useful when
     if mapping:
         annos = apply_mapping(annos, mapping)
-    import concurrent.futures
 
-
-    with concurrent.futures.ProcessPoolExecutor() as executor:
-        futures = []
-        progress_bar = tqdm(total=len(annos), desc=split)
-        for anno in annos:
-            future = executor.submit(process_anno, anno, crop_sizes, gaps, im_dir, lb_dir)
-            futures.append(future)
-        for future in futures:
-            future.add_done_callback(lambda p: progress_bar.update())
-        # Wait for all tasks to complete
-        concurrent.futures.wait(futures)
-        progress_bar.close()
-    print(f"Done processing split: {split}!")
+    import multiprocessing
+    pool = multiprocessing.Pool()
+    args = [(anno, crop_sizes, gaps, im_dir, lb_dir) for anno in annos]
+    mapped_values = list(tqdm(pool.imap_unordered(process_anno, args,), total=len(args)))
+    pool.close()
+    # assert all mapped values are true
+    assert all(mapped_values)
+    # Check for exceptions raised in process_anno
+    for value in mapped_values:
+        if isinstance(value, Exception):
+            raise value
+    print(f"Done splitting {split} into patches!")
 
 def split_trainval(data_root, save_dir, crop_size=1024, gap=200, rates=[1.0], mapping=None):
     """
@@ -293,6 +295,17 @@ def split_trainval(data_root, save_dir, crop_size=1024, gap=200, rates=[1.0], ma
     for split in ["train", "val"]:
         split_images_and_labels(data_root, save_dir, split, crop_sizes, gaps, mapping=mapping)
 
+def crop_and_save_patches(args):
+    im_file, save_dir, crop_sizes, gaps = args
+    w, h = exif_size(Image.open(im_file))
+    windows = get_windows((h, w), crop_sizes=crop_sizes, gaps=gaps)
+    im = cv2.imread(im_file)
+    name = Path(im_file).stem
+    for window in windows:
+        x_start, y_start, x_stop, y_stop = window.tolist()
+        new_name = f"{name}__{x_stop - x_start}__{x_start}___{y_start}"
+        patch_im = im[y_start:y_stop, x_start:x_stop]
+        cv2.imwrite(str(save_dir / f"{new_name}.jpg"), patch_im)
 
 def split_test(data_root, save_dir, crop_size=1024, gap=200, rates=[1.0]):
     """
@@ -318,17 +331,16 @@ def split_test(data_root, save_dir, crop_size=1024, gap=200, rates=[1.0]):
     im_dir = Path(data_root) / "images" / "test"
     assert im_dir.exists(), f"Can't find {im_dir}, please check your data root."
     im_files = glob(str(im_dir / "*"))
-    for im_file in tqdm(im_files, total=len(im_files), desc="test"):
-        w, h = exif_size(Image.open(im_file))
-        windows = get_windows((h, w), crop_sizes=crop_sizes, gaps=gaps)
-        im = cv2.imread(im_file)
-        name = Path(im_file).stem
-        for window in windows:
-            x_start, y_start, x_stop, y_stop = window.tolist()
-            new_name = f"{name}__{x_stop - x_start}__{x_start}___{y_start}"
-            patch_im = im[y_start:y_stop, x_start:x_stop]
-            cv2.imwrite(str(save_dir / f"{new_name}.jpg"), patch_im)
-
+    args = [(im_file, save_dir, crop_sizes, gaps) for im_file in im_files]
+    
+    import multiprocessing
+    pool = multiprocessing.Pool()
+    mapped_values = list(tqdm(pool.imap_unordered(crop_and_save_patches, args,), total=len(args)))
+    pool.close()
+    for value in mapped_values:
+        if isinstance(value, Exception):
+            raise value
+    print(f"Done splitting test set into patches!")
 
 if __name__ == "__main__":
     split_trainval(data_root="DOTAv2", save_dir="DOTAv2-split")
