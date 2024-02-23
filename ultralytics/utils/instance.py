@@ -231,8 +231,9 @@ class Instances:
         self._bboxes.mul(scale=(scale_w, scale_h, scale_w, scale_h))
         if bbox_only:
             return
-        self.segments[..., 0] *= scale_w
-        self.segments[..., 1] *= scale_h
+        if self.segments is not None:
+            self.segments[..., 0] *= scale_w
+            self.segments[..., 1] *= scale_h
         if self.keypoints is not None:
             self.keypoints[..., 0] *= scale_w
             self.keypoints[..., 1] *= scale_h
@@ -242,8 +243,10 @@ class Instances:
         if not self.normalized:
             return
         self._bboxes.mul(scale=(w, h, w, h))
-        self.segments[..., 0] *= w
-        self.segments[..., 1] *= h
+        # Check if self.segments type is None
+        if self.segments is not None:
+            self.segments[..., 0] *= w
+            self.segments[..., 1] *= h
         if self.keypoints is not None:
             self.keypoints[..., 0] *= w
             self.keypoints[..., 1] *= h
