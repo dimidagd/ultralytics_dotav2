@@ -53,6 +53,18 @@ def bbox_iof(polygon1, bbox2, eps=1e-6):
     return outputs
 
 
+def process_file(im_file, lb_file):
+    w, h = exif_size(Image.open(im_file))
+    if Path(lb_file).exists(): # XXX: Mention in PR that this is needed for images without labels.
+        with open(lb_file) as f:
+            lb = [x.split() for x in f.read().strip().splitlines() if len(x)]
+            lb = np.array(lb, dtype=np.float32)
+    else:   # empty label
+        print(f"Empty label for {im_file}")
+        lb = np.array([], dtype=np.float32)
+    return dict(ori_size=(h, w), label=lb, filepath=im_file)
+
+
 def load_yolo_dota(data_root, split="train"):
     """
     Load DOTA dataset.
@@ -77,16 +89,10 @@ def load_yolo_dota(data_root, split="train"):
     im_files = glob(str(Path(data_root) / "images" / split / "*"))
     lb_files = img2label_paths(im_files)
     annos = []
-    for im_file, lb_file in zip(im_files, lb_files): 
-        w, h = exif_size(Image.open(im_file))
-        if Path(lb_file).exists(): # XXX: Mention in PR that this is needed for images without labels.
-            with open(lb_file) as f:
-                lb = [x.split() for x in f.read().strip().splitlines() if len(x)]
-                lb = np.array(lb, dtype=np.float32)
-        else:   # empty label
-            print(f"Empty label for {im_file}")
-            lb = np.array([], dtype=np.float32)
-        annos.append(dict(ori_size=(h, w), label=lb, filepath=im_file))
+    from concurrent.futures import ThreadPoolExecutor
+    with ThreadPoolExecutor() as executor:
+        annos = list(tqdm(executor.map(process_file, im_files, lb_files), total=len(im_files), desc="Loading image metadata"))
+
     return annos
 
 
@@ -209,7 +215,7 @@ def apply_mapping(annos, mapping):
         array = annot['label']
         if array.ndim < 2:
             print("Skipping empty label.")
-            new_annos.append([])
+            new_annos.append(annot)
             continue
         mask = np.isin(array[:, 0], list(mapping.keys()))
         # Apply the mask to the array
@@ -221,7 +227,8 @@ def apply_mapping(annos, mapping):
             new_annos.append(annot)
         else:
             print("Filtering for specific classes resulted in an empty label.")
-            new_annos.append([])
+            annot['label'] = filtered_array
+            new_annos.append(annot)
     return new_annos
 
 def split_images_and_labels(data_root, save_dir, split="train", crop_sizes=[1024], gaps=[200], mapping=None):
