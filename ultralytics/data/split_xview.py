@@ -69,7 +69,7 @@ def transform_yolo_dota_to_obb(yolo_dota_path, output_dir, splits=['val','train'
             split_dir_original = Path(yolo_dota_path) / Path("labels") / Path(split+'_original')
             tmp_output_dir_split = Path(tmpdir) / Path(split+'_obb')
             print(f"Removing {tmp_output_dir_split}...")
-            shutil.rmtree(tmp_output_dir_split, ignore_errors=True)
+            subprocess.run(["rm","-rf", str(tmp_output_dir_split), str(split_dir_original)])
             tmp_output_dir_split.mkdir(parents=True, exist_ok=True)
             print(f"Loading {split} split...")
             dataset = load_yolo_dota(yolo_dota_path, split=split)
