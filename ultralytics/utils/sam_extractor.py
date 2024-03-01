@@ -26,6 +26,8 @@ from pathlib import Path
 from tqdm import tqdm
 import yaml
 
+from PIL import Image
+
 from ultralytics import SAM
 from ultralytics.utils.instance import Bboxes, Instances
 from ultralytics.utils.ops import xyxyxyxy2xywhr
@@ -162,38 +164,153 @@ def associate_points_to_boxes(points,boxes, og_labels, no_match_class):
                     else:
                         labels_.append(no_match_class)
                 return labels_
+
+def sort_points(points):
+    """
+    Sort a list of 4 points in the order: top-left, top-right, bottom-right, bottom-left.
+    Each point is a tuple containing the x and y coordinates.
+    """
+    # Sort the points based on y-coordinate (ascending) and then x-coordinate (ascending)
+    points.sort(key=lambda point: (point[1], point[0]))
+
+    # The points are now in the order: top-left, bottom-left, top-right, bottom-right
+    # Swap the middle two points to get the desired order
+    points[1], points[2] = points[2], points[1]
+    points[3], points[2] = points[2], points[3]
+
+    return points
+
+import numpy
+
+# function copy-pasted from https://stackoverflow.com/a/14178717/744230
+def find_coeffs(pa, pb):
+    matrix = []
+    for p1, p2 in zip(pa, pb):
+        matrix.append([p1[0], p1[1], 1, 0, 0, 0, -p2[0]*p1[0], -p2[0]*p1[1]])
+        matrix.append([0, 0, 0, p1[0], p1[1], 1, -p2[1]*p1[0], -p2[1]*p1[1]])
+
+    A = numpy.matrix(matrix, dtype=numpy.float32)
+    B = numpy.array(pb).reshape(8)
+
+    res = numpy.dot(numpy.linalg.inv(A.T * A) * A.T, B)
+    return numpy.array(res).reshape(8)
+
+
+def crop_quadrilateral(image, points):
+    """
+    Crop a quadrilateral defined by `points` from `image`.
+    `points` is a list of 4 tuples, each containing the x and y coordinates of a point.
+    The points are sorted automatically.
+    """
+    # Sort the points
+    points = sort_points(points) #  top-left, top-right, bottom-right, bottom-left.
+
+    # Width is euclidean distance between top-left and topright points
+    width = numpy.sqrt((points[1][0] - points[0][0])**2 + (points[1][1] - points[0][1])**2)
+    # Height is euclidean distance between top-left and bottom-left points
+    height = numpy.sqrt((points[2][0] - points[0][0])**2 + (points[2][1] - points[0][1])**2)
+    output_size = (int(width), int(height))
+
+    output_points = [(0, 0), (width, 0), (width, height), (0, height)] #  top-left, top-right, bottom-right, bottom-left.
+    try:
+        coeffs = find_coeffs(
+        output_points,
+        points)
+    except numpy.linalg.LinAlgError: # Singula rmatrix in coeffs calculation
+        return None
+    transform = image.transform(output_size, Image.PERSPECTIVE, coeffs)
+    return transform
+
+def crop_image(im_path, lb_path, output_dir):
+    """
+    Crop the image based on the bounding box coordinates provided in the label file.
+
+    Args:
+        im_path (str): The path to the input image file.
+        lb_path (str): The path to the label file containing bounding box coordinates (clsxyxyxyxy).
+        output_dir (str): The directory to save the cropped images.
+
+    Returns:
+        None
+    """
+    output_imgs = []
+
+    with open(lb_path, "r") as file:
+        lines = file.readlines()
+        if not lines:
+            print("Label file is empty.")
+            return output_imgs
+    
+    for i, line in enumerate(lines):
+        components = line.split()
+        class_idx = int(components[0])
+        boxes = np.asarray(list(map(float, components[1:])))
+        boxes = boxes.reshape(-1, 2)
+        # Get the bounding box class xyxyxyxy
+        # Get the points as pairs of two from box
+        points = Points([box for box in boxes], normalized=True)
+        # Open the image
+        img = Image.open(im_path)
+        w,h = img.size
+        points.denormalize(w=w, h=h)
+        # Crop the image
+        crop = crop_quadrilateral(img, [tuple(_) for _ in points.points])
+        if crop:
+            output_filename = f"{output_dir}/crop{i}_class_{class_idx}.jpg"
+            # Save the cropped image
+            crop.save(output_filename)
+        output_imgs.append(output_filename)
+    return output_imgs
 class DatasetOBBExtractor:
-    def __init__(self, model, dataset_dir, output_dir, default_class, debug=False, yaml_cfg=None, keep_only_classes=[23, 24, 25, 26, 27, 28, 29, 30, 31, 32]): # Ship classes for xView
+    def __init__(self, model, dataset_dir, output_dir, default_class=None, debug=False, yaml_cfg=None, keep_only_classes=[23, 24, 25, 26, 27, 28, 29, 30, 31, 32]): # Ship classes for xView
         self.model = model
         self.keep_only_classes = keep_only_classes
         self.dataset_dir = dataset_dir
         self.output_dir = output_dir
         if not yaml_cfg:
             #Read classes names from ultralytics/cfg/datasets/xView-patches.yaml
-            cfg_path = Path("../ultralytics/cfg/datasets/xView-patches.yaml")
+            cfg_path = Path("../ultralytics/cfg/datasets/xView-patches-ship-sam.yaml")
             with open(cfg_path, "r") as file:
                 cfg = yaml.safe_load(file)
         else:
             # Use provided object as cfg
-            cfg_path = yaml_cfg
+            cfg = yaml_cfg
         self.debug = debug
         self.CLASS_NAMES = cfg["names"]
         self.IDX_NAMES = {v: k for k, v in self.CLASS_NAMES.items()}
         self.default_class = default_class
-
-        assert self.default_class in self.IDX_NAMES.keys(), f"The default class {self.default_class} is not in the class names"
+        if self.default_class:
+            assert self.default_class in self.IDX_NAMES.keys(), f"The default class {self.default_class} is not in the class names"
 
         # Create output dirs
-        (Path(output_dir) / Path('labels') / Path('train') ).mkdir(parents=True, exist_ok=True)
-        (Path(output_dir) / Path('labels') / Path('val') ).mkdir(parents=True, exist_ok=True)
-        if self.debug:
-            (Path(output_dir) / Path('debug') / Path('train') ).mkdir(parents=True, exist_ok=True)
-            (Path(output_dir) / Path('debug') / Path('val') ).mkdir(parents=True, exist_ok=True)
+        if self.output_dir:
+            (Path(output_dir) / Path('labels') / Path('train') ).mkdir(parents=True, exist_ok=True)
+            (Path(output_dir) / Path('labels') / Path('val') ).mkdir(parents=True, exist_ok=True)
+            if self.debug:
+                (Path(output_dir) / Path('debug') / Path('train') ).mkdir(parents=True, exist_ok=True)
+                (Path(output_dir) / Path('debug') / Path('val') ).mkdir(parents=True, exist_ok=True)
         # Check if dataset_dir exists
         assert Path(dataset_dir).exists(), f"The dataset_dir {dataset_dir} does not exist"
-    def get_dataset_info(self):
+
+    def extract_patches(self, idxs, output_dir):
+        # Create output_dir if doesnt exist
+        Path(output_dir).mkdir(parents=True, exist_ok=True)
+        " Extract patches from the dataset"
+        dataset = self.data_info
+        crop_fpaths = []
+        if idxs:
+            # Grab only indexes of interest (might be not useful because empty labels)
+            dataset = [dataset[i] for i in idxs]
+        for data in tqdm(dataset):
+            labels = data["label"]
+            lb_path = data["filepath"].replace("images", "labels").replace("jpg", "txt")
+            im_path = data["filepath"]
+            croped_image_segments = crop_image(im_path, lb_path, output_dir)
+            crop_fpaths.append(croped_image_segments)
+        return crop_fpaths
+    def get_dataset_info(self,fast=False):
         " Get the dataset information, filter out empty labels"
-        self.data_info = load_yolo_dota(self.dataset_dir)
+        self.data_info = load_yolo_dota(self.dataset_dir,fast=fast)
         self.data_info = list(filter(lambda x: len(x["label"]) > 0, self.data_info))
     def process(self, idxs=None):
         dataset = self.data_info
@@ -214,6 +331,7 @@ class DatasetOBBExtractor:
 
             # If no objects of interest in this image, skip.
             if len(labels_reduced) < 1:
+                print(f"Skipping {lb_path} because no objects of interest")
                 continue
 
             w,h = data["ori_size"]

@@ -61,3 +61,4 @@ unzip -o -d $dataset_dir $ZIPFILE | pv -l -s $(unzip -Z -1 $ZIPFILE | wc -l) > /
 echo "Unzipped $ZIPFILE into $dataset_dir" && \
 rm $ZIPFILE && \
 echo "Removed $ZIPFILE"
+

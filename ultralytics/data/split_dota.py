@@ -65,7 +65,7 @@ def process_file(im_file, lb_file):
     return dict(ori_size=(h, w), label=lb, filepath=im_file)
 
 
-def load_yolo_dota(data_root, split="train"):
+def load_yolo_dota(data_root, split="train", fast=False):
     """
     Load DOTA dataset.
 
@@ -87,6 +87,8 @@ def load_yolo_dota(data_root, split="train"):
     im_dir = Path(data_root) / "images" / split
     assert im_dir.exists(), f"Can't find {im_dir}, please check your data root."
     im_files = glob(str(Path(data_root) / "images" / split / "*"))
+    if fast:
+        im_files = im_files[0:fast]
     lb_files = img2label_paths(im_files)
     annos = []
     from concurrent.futures import ThreadPoolExecutor
@@ -197,6 +199,8 @@ def crop_and_save(anno, windows, window_objs, im_dir, lb_dir):
 
 def process_anno(args):
     anno, crop_sizes, gaps, im_dir, lb_dir = args
+    if anno is None:
+        return True
     windows = get_windows(anno["ori_size"], crop_sizes, gaps)
     window_objs = get_window_obj(anno, windows)
     crop_and_save(anno, windows, window_objs, str(im_dir), str(lb_dir))
@@ -215,20 +219,20 @@ def apply_mapping(annos, mapping):
         array = annot['label']
         if array.ndim < 2:
             print("Skipping empty label.")
-            new_annos.append(annot)
+            new_annos.append(None)
             continue
         mask = np.isin(array[:, 0], list(mapping.keys()))
         # Apply the mask to the array
         filtered_array = array[mask]
         # Apply the mapping to the first column of the array
-        if filtered_array.shape[0] > 0:
+        if filtered_array.size > 0:
             filtered_array[:, 0] = np.vectorize(mapping.get)(filtered_array[:, 0])
             annot['label'] = filtered_array
             new_annos.append(annot)
         else:
             print("Filtering for specific classes resulted in an empty label.")
-            annot['label'] = filtered_array
-            new_annos.append(annot)
+            #annot['label'] = filtered_array
+            new_annos.append(None)
     return new_annos
 
 def split_images_and_labels(data_root, save_dir, split="train", crop_sizes=[1024], gaps=[200], mapping=None):
@@ -347,7 +351,7 @@ def split_test(data_root, save_dir, crop_size=1024, gap=200, rates=[1.0]):
     for value in mapped_values:
         if isinstance(value, Exception):
             raise value
-    print(f"Done splitting test set into patches!")
+    print("Done splitting test set into patches!")
 
 if __name__ == "__main__":
     split_trainval(data_root="DOTAv2", save_dir="DOTAv2-split")

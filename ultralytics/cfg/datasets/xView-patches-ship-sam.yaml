@@ -15,7 +15,7 @@ val: images/val # train images (relative to 'path') 10% of 847 train images
 
 # Classes
 names:
-  0: Boat
+  0: ship
 
 # Download script/URL (optional) ---------------------------------------------------------------------------------------
 download: |
@@ -158,9 +158,6 @@ download: |
     )
 
 
-    # Transform back to YOLO det format
-    anns = transform_yolo_dota_to_obb(yolo_dota_path=final_dir, output_dir=final_dir, splits=['val','train'], inverse=True)
-    
     from ultralytics import SAM
     from ultralytics.utils.sam_extractor import DatasetOBBExtractor
     model = SAM('sam_b.pt')
@@ -171,9 +168,13 @@ download: |
     dat = DatasetOBBExtractor(model=model, 
     dataset_dir=str(dataset_dir), 
     output_dir=str(output_dir), 
-    default_class="Boat",
+    default_class="ship",
     keep_only_classes=[0],
     yaml_cfg=yaml,
     debug=debug)
     dat.get_dataset_info()
     dat.process(idxs=None)
+    #import subprocess
+    #subprocess.run(['mv', str(final_dir / 'labels'), str(final_dir / 'labels-original')])
+    #subprocess.run(['mv', str(output_dir / 'labels'), str(final_dir / 'labels')])
+
