@@ -32,7 +32,7 @@ MD5SUM_DATASET_HASH="a83b375523f0951fb269f94b49b2d31b"
 # Download/unzip images and labels
 
 d=$GIT_ROOT/datasets # unzip directory # unzip directory XXX: Might have to be removed somewhere else for ultralytics to actually find them
-DATA_DIR=/tmp/$dataset_name
+DATA_DIR=/tmp/downloads/$dataset_name
 mkdir -p $DATA_DIR
 
 
@@ -87,7 +87,7 @@ echo "MD5sum match" || echo "MD5sum mismatch, redownload the files."
 rm -rf $dataset_dir && \
 mkdir -p $dataset_dir && \
 echo "Unzipping $ZIPFILE into $dataset_dir" && \
-unzip -n -o -d $dataset_dir $ZIPFILE | pv -l -s $(unzip -Z -1 $ZIPFILE | wc -l) > /dev/null && \
+unzip -o -d $dataset_dir $ZIPFILE | pv -l -s $(unzip -Z -1 $ZIPFILE | wc -l) > /dev/null && \
 echo "Unzipped $ZIPFILE into $dataset_dir" && \
 rm $ZIPFILE && \
 echo "Removed $ZIPFILE"
