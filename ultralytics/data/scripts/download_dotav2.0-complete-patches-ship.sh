@@ -14,6 +14,7 @@
 url=$1 # Base dataset url
 if [ -z "$url" ]; then
     url=https://github.com/dimidagd/ultralytics_dotav2/releases/download/dota-v2.0/
+fi
 # Save git root path to a variable
 GIT_ROOT=$(git rev-parse --show-toplevel)
 parent_dataset_name=DOTA-v2.0
