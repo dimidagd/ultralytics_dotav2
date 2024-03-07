@@ -14,7 +14,7 @@ bash $GIT_ROOT/ultralytics/data/scripts/download_dotav1.0.sh # XXX: ultralytics 
 
 parent_dataset_name=DOTAv1
 dataset_name=$parent_dataset_name-patches # Must match dataset definition
-d=$GIT_ROOT/examples/datasets # unzip directory XXX: Might have to be removed somewhere else for ultralytics to actually find them
+d=$GIT_ROOT/datasets # unzip directory XXX: Might have to be removed somewhere else for ultralytics to actually find them
 dataset_dir=$d/$dataset_name
 rm -rf $dataset_dir
 
