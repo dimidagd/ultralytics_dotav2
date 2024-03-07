@@ -96,7 +96,7 @@ download: |
   Image.MAX_IMAGE_PIXELS = None # There is a security issue related to this.
 
   final_dir = Path(yaml['path'])
-  dir =  final_dir.parent / Path('xView')
+  dir =  '/tmp' / Path('xView')
   if True:
     def convert_labels(fname=Path('xView/xView_train.geojson')):
         # Convert xView geoJSON labels to YOLO format
