@@ -25,7 +25,7 @@ if [ -z "$dataset_name" ]; then
 fi
 if [ -z "$dataset_dir" ]; then
     GIT_ROOT=$(git rev-parse --show-toplevel)
-    d=$GIT_ROOT/examples/datasets # unzip directory # unzip directory XXX: Might have to be removed somewhere else for ultralytics to actually find them
+    d=$GIT_ROOT/datasets # unzip directory # unzip directory XXX: Might have to be removed somewhere else for ultralytics to actually find them
     dataset_dir=$d/$dataset_name
 fi
 
@@ -35,7 +35,7 @@ MD5SUM_DATASET_HASH="a09649a06b3e52a7d3d54e9d2f765b2c"
 # Download/unzip images and labels
 
 
-DATA_DIR=/tmp/$dataset_name
+DATA_DIR=/tmp/downloads/$dataset_name
 mkdir -p $DATA_DIR
 ZIPFILEBASENAME=xView.zip
 md5file=$DATA_DIR/$ZIPFILEBASENAME.md5list
@@ -46,7 +46,7 @@ if [ -d $url ]; then
 else
     echo "URL $url is not a dir, using as is"
 fi
-curl -L $url$md5list -o $md5file -# && echo "Download $md5file successful."
+curl -L ${url}md5list -o $md5file -# && echo "Download $url$md5list into $md5file successful."
 zipfiles=
 while read -r line; do
     md5sum=$(echo $line | awk '{print $1}')

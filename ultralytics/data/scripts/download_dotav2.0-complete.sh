@@ -25,14 +25,14 @@ if [ -z "$dataset_name" ]; then
 fi
 if [ -z "$dataset_dir" ]; then
     GIT_ROOT=$(git rev-parse --show-toplevel)
-    d=$GIT_ROOT/examples/datasets # unzip directory # unzip directory XXX: Might have to be removed somewhere else for ultralytics to actually find them
+    d=$GIT_ROOT/datasets # unzip directory # unzip directory XXX: Might have to be removed somewhere else for ultralytics to actually find them
     dataset_dir=$d/$dataset_name
 fi
 MD5SUM_DATASET_HASH="a83b375523f0951fb269f94b49b2d31b"
 # Download/unzip images and labels
 
-d=$GIT_ROOT/examples/datasets # unzip directory # unzip directory XXX: Might have to be removed somewhere else for ultralytics to actually find them
-DATA_DIR=/tmp/$dataset_name
+d=$GIT_ROOT/datasets # unzip directory # unzip directory XXX: Might have to be removed somewhere else for ultralytics to actually find them
+DATA_DIR=/tmp/downloads/$dataset_name
 mkdir -p $DATA_DIR
 
 
