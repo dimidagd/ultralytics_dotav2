@@ -29,7 +29,7 @@ from ultralytics.utils import (
     is_dir_writeable,
 )
 from ultralytics.utils.downloads import download
-from ultralytics.utils.torch_utils import TORCH_1_9
+from ultralytics.utils.torch_utils import TORCH_1_9, TORCH_1_13
 
 MODEL = WEIGHTS_DIR / "path with spaces" / "yolov8n.pt"  # test spaces in path
 CFG = "yolov8n.yaml"
@@ -219,6 +219,7 @@ def test_export_onnx():
 
 
 @pytest.mark.skipif(checks.IS_PYTHON_3_12, reason="OpenVINO not supported in Python 3.12")
+@pytest.mark.skipif(not TORCH_1_13, reason="OpenVINO requires torch>=1.13")
 def test_export_openvino():
     """Test exporting the YOLO model to OpenVINO format."""
     f = YOLO(MODEL).export(format="openvino")
@@ -555,6 +556,7 @@ def test_hub():
 
 @pytest.fixture
 def image():
+    """Loads an image from a predefined source using OpenCV."""
     return cv2.imread(str(SOURCE))
 
 
@@ -568,6 +570,7 @@ def image():
     ],
 )
 def test_classify_transforms_train(image, auto_augment, erasing, force_color_jitter):
+    """Tests classification transforms during training with various augmentation settings."""
     import torchvision.transforms as T
 
     from ultralytics.data.augment import classify_augmentations
