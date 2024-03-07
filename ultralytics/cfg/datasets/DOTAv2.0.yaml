@@ -34,4 +34,4 @@ names:
   16: airport # new class v2.0
   17: helipad # new class v2.0
 # Download script/URL (optional)
-download: bash ./ultralytics/data/scripts/download_dotav2.0-complete.sh # XXX: ./ultralytics will have to be removed if used as package
+download: bash ./ultralytics/data/scripts/download_dotav2.0-complete.sh https://github.com/dimidagd/ultralytics_dotav2/releases/download/dota-v2.0/ # XXX: ./ultralytics will have to be removed if used as package

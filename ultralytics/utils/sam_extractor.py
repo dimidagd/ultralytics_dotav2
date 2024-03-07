@@ -26,14 +26,30 @@ from pathlib import Path
 from tqdm import tqdm
 import yaml
 
-from PIL import Image
-
+import numpy
 from ultralytics import SAM
 from ultralytics.utils.instance import Bboxes, Instances
 from ultralytics.utils.ops import xyxyxyxy2xywhr
 from ultralytics.data.split_dota import load_yolo_dota
 
 
+import os
+import shutil
+
+def format_patches_for_image_classification(base_dir, output_dir, move=False):
+    # Discover all files in the folder
+    files = os.listdir(base_dir)
+    assert(len(files)), f"No files to move in {base_dir}"
+    # Extract class number from files
+    for file in files:
+        class_num = file.split("_")[2].split(".")[0]
+        class_dir = f"{output_dir}/class_{class_num}"
+        if not os.path.exists(class_dir):
+            os.makedirs(class_dir)
+        if move:
+            shutil.move(f"{base_dir}/{file}", f"{class_dir}/{file}")
+        else:
+            shutil.copy(f"{base_dir}/{file}", f"{class_dir}/{file}")
 
 class Points:
     def __init__(self, points: list[list[int]], normalized):
@@ -75,7 +91,7 @@ def get_enclosing_points(mask: torch.Tensor) -> np.ndarray:
 def get_point_prompts(lb_path, normalized):
     "Accepts lb_path containing labels, each labels is a line with xyxy box coordinates"
     # Read the file
-    with open(lb_path, "r") as file:
+    with open(lb_path) as file:
         lines = file.readlines()
     # Parse the lines
     points = []
@@ -87,13 +103,13 @@ def get_point_prompts(lb_path, normalized):
     # Calculate the center of the box
         center_x = (x1 + x2 + x3 + x4) / 4
         center_y = (y1 + y2 + y3 + y4) / 4
-        
+
         points.append([center_x, center_y])
         labels.append(class_idx)
     return Points(points, normalized), labels
 
 
-    
+
 def xyxyxyxy_to_xyxy(box: list)-> list:
     " Convert 1x8 bbox list from xyxyxyxy to xyxy list"
     x1, y1, x2, y2, x3, y3, x4, y4 = box
@@ -106,10 +122,10 @@ def xyxyxyxy_to_xyxy(box: list)-> list:
 
 def get_box_prompts(lb_path) -> tuple[Bboxes, list]:
     " Get the boxes and labels from the label file, label is in the YOLO DET format,i.e bottom left, top right: class_idx, x1, y1, x2, y2"
-    with open(lb_path, "r") as file:
+    with open(lb_path) as file:
         lines = file.readlines()
     # Open the image
-    
+
     # Parse the lines
     boxes = []
     labels = []
@@ -123,7 +139,7 @@ def get_box_prompts(lb_path) -> tuple[Bboxes, list]:
     bboxes = Bboxes(
         bboxes=np.array(xyxy_boxes),
         format="xyxy",
-    )	
+    )
     return bboxes, labels
 
 def write_bboxes_to_file(bboxes: np.ndarray, labels: list, path: str, format: str = "xyxy"):
@@ -152,7 +168,7 @@ def check_if_inside(point, box):
     x, y = point
     x1, y1, x2, y2 = box
     return x >= x1 and x <= x2 and y >= y1 and y <= y2
-                
+
 def associate_points_to_boxes(points,boxes, og_labels, no_match_class):
                 " Associate boxes to first matching OG label"
                 labels_ = []
@@ -180,7 +196,6 @@ def sort_points(points):
 
     return points
 
-import numpy
 
 # function copy-pasted from https://stackoverflow.com/a/14178717/744230
 def find_coeffs(pa, pb):
@@ -235,18 +250,17 @@ def crop_image(im_path, lb_path, output_dir):
     """
     output_imgs = []
 
-    with open(lb_path, "r") as file:
+    with open(lb_path) as file:
         lines = file.readlines()
         if not lines:
             print("Label file is empty.")
             return output_imgs
-    
+
     for i, line in enumerate(lines):
         components = line.split()
         class_idx = int(components[0])
         boxes = np.asarray(list(map(float, components[1:])))
         boxes = boxes.reshape(-1, 2)
-        # Get the bounding box class xyxyxyxy
         # Get the points as pairs of two from box
         points = Points([box for box in boxes], normalized=True)
         # Open the image
@@ -259,10 +273,11 @@ def crop_image(im_path, lb_path, output_dir):
             output_filename = f"{output_dir}/crop{i}_class_{class_idx}.jpg"
             # Save the cropped image
             crop.save(output_filename)
-        output_imgs.append(output_filename)
+            output_imgs.append(output_filename)
+
     return output_imgs
 class DatasetOBBExtractor:
-    def __init__(self, model, dataset_dir, output_dir, default_class=None, debug=False, yaml_cfg=None, keep_only_classes=[23, 24, 25, 26, 27, 28, 29, 30, 31, 32]): # Ship classes for xView
+    def __init__(self, model, dataset_dir, output_dir, default_class=None, debug=False, yaml_cfg=None, keep_only_classes=False): # Ship classes for xView
         self.model = model
         self.keep_only_classes = keep_only_classes
         self.dataset_dir = dataset_dir
@@ -270,7 +285,7 @@ class DatasetOBBExtractor:
         if not yaml_cfg:
             #Read classes names from ultralytics/cfg/datasets/xView-patches.yaml
             cfg_path = Path("../ultralytics/cfg/datasets/xView-patches-ship-sam.yaml")
-            with open(cfg_path, "r") as file:
+            with open(cfg_path) as file:
                 cfg = yaml.safe_load(file)
         else:
             # Use provided object as cfg
@@ -293,7 +308,7 @@ class DatasetOBBExtractor:
         assert Path(dataset_dir).exists(), f"The dataset_dir {dataset_dir} does not exist"
 
     def extract_patches(self, idxs, output_dir):
-        # Create output_dir if doesnt exist
+        # Create output_dir if does not exist
         Path(output_dir).mkdir(parents=True, exist_ok=True)
         " Extract patches from the dataset"
         dataset = self.data_info
@@ -302,7 +317,7 @@ class DatasetOBBExtractor:
             # Grab only indexes of interest (might be not useful because empty labels)
             dataset = [dataset[i] for i in idxs]
         for data in tqdm(dataset):
-            labels = data["label"]
+            # labels = data["label"]
             lb_path = data["filepath"].replace("images", "labels").replace("jpg", "txt")
             im_path = data["filepath"]
             croped_image_segments = crop_image(im_path, lb_path, output_dir)
@@ -323,11 +338,14 @@ class DatasetOBBExtractor:
             xyxyboxes, labels = get_box_prompts(lb_path)
             labels_arr = np.array(labels)
             # Keep only ship points
-            labels_reduced = [label for label in labels if label in self.keep_only_classes] # Hard coded ship classes
-            points.points = [point for point, label in zip(points.points, labels) if label in self.keep_only_classes] # Hard coded ship classes
+            if self.keep_only_classes:
+                labels_reduced = [label for label in labels if label in self.keep_only_classes] # Hard coded ship classes
+                points.points = [point for point, label in zip(points.points, labels) if label in self.keep_only_classes]
+                xyxyboxes.bboxes = xyxyboxes.bboxes[np.where(np.isin(labels_arr, self.keep_only_classes))]
+            else:
+                labels_reduced = labels
             # Keep only ship boxes, ie  where label is in self.keep_only_classes list
 
-            xyxyboxes.bboxes = xyxyboxes.bboxes[np.where(np.isin(labels_arr, self.keep_only_classes))]
 
             # If no objects of interest in this image, skip.
             if len(labels_reduced) < 1:
@@ -335,7 +353,7 @@ class DatasetOBBExtractor:
                 continue
 
             w,h = data["ori_size"]
-            # Px coordinats of point queries
+            # Px coordinates of point queries
             points.denormalize(w=w, h=h)
             # Normalized box queries
             instances = Instances(bboxes=xyxyboxes.bboxes, bbox_format="xyxy", normalized=True)
@@ -349,16 +367,18 @@ class DatasetOBBExtractor:
 
             # Get boxes from masks XXX: Some masks are sometimes disjoint even though they correspond to the same object.
             obb_boxes = np.vstack([get_enclosing_points(mask) for mask in r.masks.data])
-            # Get original label path 
+            # Get original label path
             lb_relative_path = Path(data["filepath"]).relative_to(Path(data["filepath"]).parents[2])
             lb_abs_path = Path(self.output_dir) / lb_relative_path
             # New label path
             output_label = str(lb_abs_path.with_suffix('.txt')).replace("images", "labels")
-            
+
             # Transfer old label classes to obb boxes by association.
             labels_ = associate_points_to_boxes(points.points, xyxyboxes.bboxes, labels_reduced, self.IDX_NAMES[self.default_class])
             # Write label file
-            write_bboxes_to_file(obb_boxes, labels_, output_label, format="xyxyxyxy")
+            obb_boxes_normalized = obb_boxes.reshape(-1,2)/np.array([w,h])
+            obb_boxes_normalized = obb_boxes_normalized.reshape(-1,8)
+            write_bboxes_to_file(obb_boxes_normalized, labels_, output_label, format="xyxyxyxy")
             # If debug save images with OG and new labels, return generator object.
             if self.debug:
                 og_det_path, obb_det_path = self.plot(r, instances.bboxes, obb_boxes, labels_, output_label)

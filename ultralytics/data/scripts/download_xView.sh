@@ -18,49 +18,46 @@ dataset_dir=$2 # unzip directory
 dataset_name=$3 # dataset name
 
 if [ -z "$url" ]; then
-    url=https://github.com/dimidagd/ultralytics_dotav2/releases/download/dota-v2.0/
+    url=https://github.com/dimidagd/ultralytics_dotav2/releases/download/xView/
 fi
 if [ -z "$dataset_name" ]; then
-    dataset_name=DOTA-v2.0
+    dataset_name=xView
 fi
 if [ -z "$dataset_dir" ]; then
     GIT_ROOT=$(git rev-parse --show-toplevel)
     d=$GIT_ROOT/examples/datasets # unzip directory # unzip directory XXX: Might have to be removed somewhere else for ultralytics to actually find them
     dataset_dir=$d/$dataset_name
 fi
-MD5SUM_DATASET_HASH="a83b375523f0951fb269f94b49b2d31b"
+
+MD5SUM_DATASET_HASH="a09649a06b3e52a7d3d54e9d2f765b2c"
+
+
 # Download/unzip images and labels
 
-d=$GIT_ROOT/examples/datasets # unzip directory # unzip directory XXX: Might have to be removed somewhere else for ultralytics to actually find them
+
 DATA_DIR=/tmp/$dataset_name
 mkdir -p $DATA_DIR
-
-
-ZIPFILEBASENAME=dotav2.zip
+ZIPFILEBASENAME=xView.zip
+md5file=$DATA_DIR/$ZIPFILEBASENAME.md5list
 #Check if url is filepath
-if [ -f $url ]; then
+if [ -d $url ]; then
     url=file://$url
     echo "URL is a file, reading from file $url"
 else
-    echo "URL is not a file, using as is"
+    echo "URL $url is not a dir, using as is"
 fi
-md5file=$DATA_DIR/$ZIPFILEBASENAME.md5list
-md5link="${url}md5list"
-# Download all files in the list
-echo "Downloading $url$md5list" && \
-curl --fail -L $md5link -o "$md5file" -# && \
-echo "Download $md5file successful."
+curl -L $url$md5list -o $md5file -# && echo "Download $md5file successful."
 zipfiles=
 while read -r line; do
     md5sum=$(echo $line | awk '{print $1}')
     filename=$(echo $line | awk '{print $2}')
     link=$url$(basename $filename)
     outfile=$DATA_DIR/$(basename $filename)
-    echo "MD5 sum: $md5sum, Filename: $filename"
+    echo "Found filename in artifacts: $filename ($md5sum), "
     if [ ! -f "$outfile" ] || [ "$(md5sum "$outfile" | awk '{print $1}')" != "$md5sum" ]; then
         echo "Downloading $link to $outfile ..."
         #curl -L $link -o $outfile -# && echo "Download $outfile successful."
-        curl --fail -L $link -o $outfile -# > "$outfile.log" 2>&1 &
+        curl -L $link -o $outfile -# > "$outfile.log" 2>&1 &
         echo "Download $outfile started in the background. See $outfile.log for progress."
     else
         echo "File $outfile exists already and has the same MD5 sum, skipped download."

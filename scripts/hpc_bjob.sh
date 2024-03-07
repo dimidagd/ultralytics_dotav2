@@ -81,19 +81,19 @@ echo "Hostname $HOSTNAME: and cuda devices: $CUDA_VISIBLE_DEVICES"
 pretrained=False
 multi_scale=False
 inputsz=640
-dataset=xView-patches
-basemodel=yolov8n
+dataset=DOTAv2.0-patches-ship
+basemodel=yolov8x-obb
 date_time=$(date '+%Y%m%d_%H%M%S')
-task=detect
+task=obb
 # Calculate new learning rate based on batch size and 64
- # default lr for adam in ultralytics yolov8 is 0.01 
+ # default lr for adam in ultralytics yolov8 is 0.01
 
 echo "Loading stash from TEMPORARYDIR"
 ./load_stash.sh TEMPORARYDIR && \
 cd TEMPORARYDIR && \
 echo "Current working directory $PWD" && \
 echo "Sourcing .bashrc-yolo" && \
-source $HOME/.bashrc-yolo && echo "Running train python script" 
+source $HOME/.bashrc-yolo && echo "Running train python script"
 optimizer=Adam
 # base lr is 0.01 if optimizer is SDG, 0.001 if Adam, else 0.01
 if [ "$optimizer" = "SGD" ] ; then
@@ -109,7 +109,11 @@ lr=$(echo "scale=5; $lr * sqrt($batch_size / 64)" | bc)
 name=$task-$basemodel-$dataset-pre-trained-$pretrained-multi_scale-$multi_scale-$optimizer-$date_time
 # Save the base command in a variable
 base_command="LOGLEVEL=INFO yolo $task train optimizer=$optimizer data=$dataset.yaml exist_ok=True lr0=$lr model=$basemodel.yaml imgsz=$inputsz pretrained=$pretrained multi_scale=$multi_scale epochs=100 save_period=5 name=$name workers=8 batch=$batch_size $distributed_cmd 2>&1 | tee  ./scripts/hpc_logs/EXPERIMENT.log"
+export HF_DATASETS_CACHE="/work1/dimda/cache/huggingface" \
+WANDB_CACHE_DIR="/work1/dimda/cache/wandb" \
+WANDB_DATA_DIR="/work1/dimda/cache/wandb" \
 
+base_command="cd examples && python3 train_classifier.py"
 if [[ "$DDP" = true ]]; then
   blaunch -z "$List" -- $base_command
 else

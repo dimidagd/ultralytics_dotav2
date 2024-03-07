@@ -8,9 +8,12 @@
 #     └── DOTA-v2.0  ← downloads here
 
 # Save git root path to a variable
+url=$1 # Base dataset url
+if [ -z "$url" ]; then
+    url=https://github.com/dimidagd/ultralytics_dotav2/releases/download/dota-v2.0/
 GIT_ROOT=$(git rev-parse --show-toplevel)
-bash $GIT_ROOT/ultralytics/data/scripts/download_dotav2.0-complete.sh # XXX: ultralytics will have to be stripped for package distribution
 parent_dataset_name=DOTA-v2.0
+bash $GIT_ROOT/ultralytics/data/scripts/download_dotav2.0-complete.sh $url $parent_dataset_name  # XXX: ultralytics will have to be stripped for package distribution
 dataset_name=$parent_dataset_name-patches
 # Download/unzip images and labels
 
