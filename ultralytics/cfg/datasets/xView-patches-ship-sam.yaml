@@ -12,7 +12,7 @@
 path: ../datasets/xView-patches-ship-sam # dataset root dir
 train: images/train # train images (relative to 'path') 90% of 847 train images
 val: images/val # train images (relative to 'path') 10% of 847 train images
-
+url: https://github.com/dimidagd/ultralytics_dotav2/releases/download/xView/
 # Classes
 names:
   0: ship
@@ -67,19 +67,9 @@ download: |
         mapped_values = list(tqdm(pool.imap_unordered(process_xview_feature, args,chunksize=300), total=len(args)))
         pool.close()
 
-    # Check links manually from https://challenge.xviewdataset.org, need account!
-
-    urls = ['https://d307kc0mrhucc3.cloudfront.net/train_labels.tgz?Expires=1708630448&Signature=MjRnSbRplJyepzt1iYuW6E-cg0YCv4CpmylSF10u-4ne1dZry2Nx0ov9taF1eXJSEcFJJ5LjG4GXfby~FSAluWnV8BTU6iHnzuR45N3LJYckP41R9wJdDjHriE~PX-Gu~EsMlIkA02eZONM4Bn3bIoP5PPfRD1X5XgSlQm1mGqnJc7nzFXQ-36h9W4tOCA~p7l-MuWS0seHWjdmnZmte9LlBdxk8-770YxvrzazsIW4gkrw1PM2eTNkf-l7ReERaTghlfwkBUwhIFMzmhUppTHeWN5nEw0bnfyp76VJzX9Gm7-syRlEO17ZS3yUmfZq12bk6OMY3-HZBS6ypACeWdQ__&Key-Pair-Id=APKAIKGDJB5C3XUL2DXQ',  # train labels
-            'https://d307kc0mrhucc3.cloudfront.net/train_images.tgz?Expires=1708630448&Signature=LXOayGhpT~vubUvP2xniCyV8wW-fEOKfulktLm3uGrHTRhRBzul6Ivk19aeFFY58a5DrP5XsfZAaA~-mao9zfXktITkS4xQZZU4C8NU5u2FMcDdnXwvO1Q~gs27L7RJyrUFd~zeetlS7Y7OsQCBSTChaeVRoQ5HQ6DrsvRPAOJNSYoLDcc-8irNKkzZrkvpmwvVurIc~pqrQ4qRqbv40Mi2LsydGKT~A10armLEZpzRlKOjrYvIMA0blnrBjeMOP6bCW2AE69EEnsKYcnrrWI0KX6WxZi9m8fi-GyMGUjTcoAEETdbvMZPbzT7Z18xXzmmzSrJ~gaJ4jouIBCbL7iQ__&Key-Pair-Id=APKAIKGDJB5C3XUL2DXQ',  # 15G, 847 train images
-            'https://d307kc0mrhucc3.cloudfront.net/val_images.tgz?Expires=1708630448&Signature=pNYkRRI4RKQkPVBnU-ZP-r1jJqXW8ckp~ebNBXw~mMlda6pXvwDKvJlF6tMD7hZnmQ242zy7Zru4~6RTCwf-kA8Z9xRsk9KYvQw-l9-lx~dMVpcs0jrGCuMpuJuyx-s~wkqAUvJ6bw7nDTwqAzVMKnp6AiMmT0y~maBWtnEPxkejSOmeQQYJFNl8Qwj5j-In0SnPILJWsVcKyKrrmjSFuVKp8g~ips~2JHUinm5GKPBWsaGKQi5vtP9b65vqtbnaz1i0mSBddnApbQu5PSgroGhfZbRnfxCbsbuZXCxEeokwUWF5nzrs7VxF49EDoVwz66yXAx8tG3MvFWwMw4CT9A__&Key-Pair-Id=APKAIKGDJB5C3XUL2DXQ']  # 5G, 282 val images (no labels)
-
-    sha1sums = ['693abfe34beabcb1bb87242241e0d0e273c36f0c', # train labels
-                '1cdd5af68ec3a696f696104efb4730928cde524e', # train images
-                '1e030f1b2b35cdb8deb408a6d227a6713c32f7ba'] # val images
-
-
-    for url, filesha1sum in zip(urls,sha1sums):
-      safe_download(url, dir=dir, sha1sum=filesha1sum)
+    import subprocess
+    # Execute download_xView.sh script with arguments url, save dir, name of dataset
+    subprocess.run(['bash', './ultralytics/data/scripts/download_xView.sh', yaml['url'], dir, 'xView'])
 
     print("Downloaded/unarchived xView data")
     # Convert labels
