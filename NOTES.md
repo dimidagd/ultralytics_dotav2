@@ -7,8 +7,23 @@ yolo obb train \
     device=0 \
     imgsz=640 \
     batch=16 \
-    epochs=100
-    workers=8 \
+    epochs=100 \
+    workers=8
+```
+or 
+
+```bash
+docker run -it --rm --gpus all --entrypoint bash --shm-size=1G yolo-train-img -c \
+"
+yolo obb train \
+    data=xView-patches.yaml \
+    pretrained=False \
+    device=0 \
+    imgsz=640 \
+    batch=16 \
+    epochs=100 \
+    workers=8
+"
 ```
 
 ### Evaluating an obb model
@@ -22,6 +37,22 @@ imgsz=640 \
 batch=16 \
 plots=True
 ```
+
+or
+
+
+```bash
+docker run -it --rm --gpus all \
+-v /tmp/best.pt:/best.pt:ro --entrypoint bash --shm-size=1G yolo-train-img -c \
+"
+yolo obb val \
+data=xView-patches-ship-sam.yaml \
+model=/best.pt \
+device=0 \
+imgsz=640 \
+batch=16 \
+plots=True
+"
 
 ### Training a classification model
 
