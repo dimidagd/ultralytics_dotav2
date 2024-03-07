@@ -35,7 +35,7 @@ MD5SUM_DATASET_HASH="a09649a06b3e52a7d3d54e9d2f765b2c"
 # Download/unzip images and labels
 
 
-DATA_DIR=/tmp/$dataset_name
+DATA_DIR=/tmp/downloads/$dataset_name
 mkdir -p $DATA_DIR
 ZIPFILEBASENAME=xView.zip
 md5file=$DATA_DIR/$ZIPFILEBASENAME.md5list
