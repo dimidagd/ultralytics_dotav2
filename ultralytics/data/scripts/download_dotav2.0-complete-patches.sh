@@ -10,7 +10,8 @@
 # Save git root path to a variable
 url=$1 # Base dataset url
 if [ -z "$url" ]; then
-    url=https://github.com/dimidagd/ultralytics_dotav2/releases/download/dota-v2.0/
+    url="https://github.com/dimidagd/ultralytics_dotav2/releases/download/dota-v2.0/"
+fi
 GIT_ROOT=$(git rev-parse --show-toplevel)
 parent_dataset_name=DOTA-v2.0
 bash $GIT_ROOT/ultralytics/data/scripts/download_dotav2.0-complete.sh $url $parent_dataset_name  # XXX: ultralytics will have to be stripped for package distribution
@@ -21,7 +22,7 @@ d=$GIT_ROOT/examples/datasets # unzip directory XXX: Might have to be removed so
 dataset_dir=$d/$dataset_name
 rm -rf $dataset_dir
 
-python3 - <<EOF
+python3 - << EOF
 from ultralytics.data.split_dota import split_trainval, split_test
 from PIL import Image
 Image.MAX_IMAGE_PIXELS = None # There is a security issue related to this.
@@ -32,5 +33,4 @@ split_trainval(
     rates=[0.5, 1.0, 1.5],    # multi-scale
     gap=500
 )
-
 EOF
