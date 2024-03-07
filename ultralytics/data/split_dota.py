@@ -259,11 +259,9 @@ def split_images_and_labels(data_root, save_dir, split="train", crop_sizes=[1024
     lb_dir.mkdir(parents=True, exist_ok=True)
 
     annos = load_yolo_dota(data_root, split=split)
-
     # Apply mapping of original labels to target labels, useful when
     if mapping:
         annos = apply_mapping(annos, mapping)
-
     import multiprocessing
     pool = multiprocessing.Pool()
     args = [(anno, crop_sizes, gaps, im_dir, lb_dir) for anno in annos]
@@ -343,7 +341,7 @@ def split_test(data_root, save_dir, crop_size=1024, gap=200, rates=[1.0]):
     assert im_dir.exists(), f"Can't find {im_dir}, please check your data root."
     im_files = glob(str(im_dir / "*"))
     args = [(im_file, save_dir, crop_sizes, gaps) for im_file in im_files]
-    
+
     import multiprocessing
     pool = multiprocessing.Pool()
     mapped_values = list(tqdm(pool.imap_unordered(crop_and_save_patches, args,), total=len(args)))
