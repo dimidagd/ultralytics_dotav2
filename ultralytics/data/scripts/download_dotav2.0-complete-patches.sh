@@ -14,11 +14,11 @@ if [ -z "$url" ]; then
 fi
 GIT_ROOT=$(git rev-parse --show-toplevel)
 parent_dataset_name=DOTA-v2.0
-bash $GIT_ROOT/ultralytics/data/scripts/download_dotav2.0-complete.sh $url $parent_dataset_name  # XXX: ultralytics will have to be stripped for package distribution
+bash $GIT_ROOT/ultralytics/data/scripts/download_dotav2.0-complete.sh $url # XXX: ultralytics will have to be stripped for package distribution
 dataset_name=$parent_dataset_name-patches
 # Download/unzip images and labels
 
-d=$GIT_ROOT/examples/datasets # unzip directory XXX: Might have to be removed somewhere else for ultralytics to actually find them
+d=$GIT_ROOT/datasets # unzip directory XXX: Might have to be removed somewhere else for ultralytics to actually find them
 dataset_dir=$d/$dataset_name
 rm -rf $dataset_dir
 

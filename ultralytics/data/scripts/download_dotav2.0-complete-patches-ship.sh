@@ -21,7 +21,7 @@ parent_dataset_name=DOTA-v2.0
 dataset_name=$parent_dataset_name-patches-ship
 # Download/unzip images and labels
 
-d=$GIT_ROOT/examples/datasets # unzip directory XXX: Might have to be removed somewhere else for ultralytics to actually find them
+d=$GIT_ROOT/datasets # unzip directory XXX: Might have to be removed somewhere else for ultralytics to actually find them
 dataset_dir=$d/$dataset_name
 rm -rf $dataset_dir
 

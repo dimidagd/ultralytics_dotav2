@@ -25,7 +25,7 @@ if [ -z "$dataset_name" ]; then
 fi
 if [ -z "$dataset_dir" ]; then
     GIT_ROOT=$(git rev-parse --show-toplevel)
-    d=$GIT_ROOT/examples/datasets # unzip directory # unzip directory XXX: Might have to be removed somewhere else for ultralytics to actually find them
+    d=$GIT_ROOT/datasets # unzip directory # unzip directory XXX: Might have to be removed somewhere else for ultralytics to actually find them
     dataset_dir=$d/$dataset_name
 fi
 
