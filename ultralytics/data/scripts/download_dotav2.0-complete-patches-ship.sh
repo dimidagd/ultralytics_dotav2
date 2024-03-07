@@ -19,7 +19,7 @@ fi
 GIT_ROOT=$(git rev-parse --show-toplevel)
 parent_dataset_name=DOTA-v2.0
 dataset_name=$parent_dataset_name-patches-ship
-ULTRALYTICS_DS_DIR=$GIT_ROOT/ultralytics/datasets
+ULTRALYTICS_DS_DIR=$GIT_ROOT/datasets
 d=/tmp/datasets # unzip directory XXX: Might have to be removed somewhere else for ultralytics to actually find them
 mkdir -p $d
 input_dir=$d/$parent_dataset_name

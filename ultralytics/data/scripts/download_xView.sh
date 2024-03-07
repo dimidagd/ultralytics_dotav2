@@ -46,7 +46,7 @@ if [ -d $url ]; then
 else
     echo "URL $url is not a dir, using as is"
 fi
-curl -L $url$md5list -o $md5file -# && echo "Download $md5file successful."
+curl -L ${url}md5list -o $md5file -# && echo "Download $url$md5list into $md5file successful."
 zipfiles=
 while read -r line; do
     md5sum=$(echo $line | awk '{print $1}')
