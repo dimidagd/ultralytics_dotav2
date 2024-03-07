@@ -87,7 +87,7 @@ echo "MD5sum match" || echo "MD5sum mismatch, redownload the files."
 rm -rf $dataset_dir && \
 mkdir -p $dataset_dir && \
 echo "Unzipping $ZIPFILE into $dataset_dir" && \
-unzip -o -d $dataset_dir $ZIPFILE | pv -l -s $(unzip -Z -1 $ZIPFILE | wc -l) > /dev/null && \
+unzip -n -o -d $dataset_dir $ZIPFILE | pv -l -s $(unzip -Z -1 $ZIPFILE | wc -l) > /dev/null && \
 echo "Unzipped $ZIPFILE into $dataset_dir" && \
 rm $ZIPFILE && \
 echo "Removed $ZIPFILE"
