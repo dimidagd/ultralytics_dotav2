@@ -2,7 +2,7 @@
 
 ```bash
 yolo obb train \
-    data=xView-patches-ship-sam.yaml \
+    data=DOTAv2.0-patches.yaml \
     pretrained=False \
     device=0 \
     imgsz=640 \
