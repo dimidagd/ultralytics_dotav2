@@ -142,7 +142,7 @@ download: |
 
     import subprocess
     # Execute download_xView.sh script with arguments url, save dir, name of dataset
-    subprocess.run(['bash', './ultralytics/data/scripts/download_xView.sh', cfg['url'], dir, 'xView'])
+    subprocess.run(['bash', './ultralytics/data/scripts/download_xView.sh', yaml['url'], dir, 'xView'])
 
     print("Downloaded/unarchived xView data")
     # Convert labels
