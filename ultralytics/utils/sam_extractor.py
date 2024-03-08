@@ -42,7 +42,7 @@ def format_patches_for_image_classification(base_dir, output_dir, move=False):
     assert(len(files)), f"No files to move in {base_dir}"
     # Extract class number from files
     for file in files:
-        class_num = file.split("_")[2].split(".")[0]
+        class_num = file.split("_")[-1].split(".")[0]
         class_dir = f"{output_dir}/class_{class_num}"
         if not os.path.exists(class_dir):
             os.makedirs(class_dir)
@@ -283,13 +283,19 @@ class DatasetOBBExtractor:
         self.dataset_dir = dataset_dir
         self.output_dir = output_dir
         if not yaml_cfg:
-            #Read classes names from ultralytics/cfg/datasets/xView-patches.yaml
+            #Read classes names from ultralytics/cfg/datasets/xView-patches.yaml as default
             cfg_path = Path("../ultralytics/cfg/datasets/xView-patches-ship-sam.yaml")
             with open(cfg_path) as file:
                 cfg = yaml.safe_load(file)
-        else:
+        elif isinstance(yaml_cfg, dict):
             # Use provided object as cfg
             cfg = yaml_cfg
+        elif isinstance(yaml_cfg, str):
+            cfg_path = Path(yaml_cfg)
+            with open(cfg_path) as file:
+                cfg = yaml.safe_load(file)
+        else:
+            raise NotImplementedError(f"Something is wrong with the data configuration, not a str, not a dict {cfg}")
         self.debug = debug
         self.CLASS_NAMES = cfg["names"]
         self.IDX_NAMES = {v: k for k, v in self.CLASS_NAMES.items()}
@@ -360,7 +366,7 @@ class DatasetOBBExtractor:
             # Px box queries
             instances.denormalize(w=w, h=h)
             # Probe SAM
-            res=self.model(data["filepath"], bboxes=instances.bboxes, points=points.points, labels=labels)
+            res=self.model(data["filepath"], bboxes=instances.bboxes, points=points.points, labels=labels,verbose=False)
             # Assert the length of results is 1
             assert len(res) == 1, "The model should return only one result"
             r = res[0]
