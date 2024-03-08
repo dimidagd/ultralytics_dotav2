@@ -38,7 +38,7 @@ mkdir -p $DATA_DIR
 
 ZIPFILEBASENAME=dotav2.zip
 #Check if url is filepath
-if [ -f $url ]; then
+if [ -d $url ]; then
     url=file://$url
     echo "URL is a file, reading from file $url"
 else
@@ -47,7 +47,7 @@ fi
 md5file=$DATA_DIR/$ZIPFILEBASENAME.md5list
 md5link="${url}md5list"
 # Download all files in the list
-echo "Downloading $url$md5list" && \
+echo "Downloading $md5link" && \
 curl --fail -L $md5link -o "$md5file" -# && \
 echo "Download $md5file successful."
 zipfiles=
