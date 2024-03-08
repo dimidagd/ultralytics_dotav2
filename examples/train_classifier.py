@@ -187,7 +187,7 @@ if __name__ == "__main__":
     logger.info(f"Will use backbone {checkpoint} with batch size {batch_size}")
 
     training_args = TrainingArguments(
-        output_dir="./runs/my_awesome_ship_model-efficientnet-b7-sam",
+        output_dir=f"./runs/{PROJNAME}-{BBONE_CHECKPOINT}",
         remove_unused_columns=False,
         evaluation_strategy="epoch",
         save_strategy="epoch",
