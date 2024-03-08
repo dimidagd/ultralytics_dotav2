@@ -1,3 +1,9 @@
+### Build the image
+
+```bash
+docker build --build-arg USER_ID=$(id -u) --build-arg GROUP_ID=$(id -g) -t yolo-train-img .
+```
+
 ### Training an obb model
 
 ```bash
@@ -10,10 +16,32 @@ yolo obb train \
     epochs=100 \
     workers=8
 ```
-or 
+
+or
 
 ```bash
-docker run -it --rm --gpus all --entrypoint bash --shm-size=1G yolo-train-img -c \
+docker run -it --rm --gpus all --shm-size=1G yolo-train-img -c \
+"
+yolo obb train \
+    data=xView-patches-ship-sam.yaml \
+    pretrained=False \
+    device=0 \
+    imgsz=640 \
+    batch=16 \
+    epochs=100 \
+    workers=8
+"
+```
+
+#### Getting data and checkpoints outside
+
+```bash
+# Create the directories first otherwise the container user won't be able to write into them as they will be owned by root.
+mkdir ~/runs ~/data
+docker run -it --rm --gpus all --shm-size=1G \
+-v ~/runs:/workdev/runs \
+-v ~/data:/workdev/datasets \
+yolo-train-img -c \
 "
 yolo obb train \
     data=xView-patches.yaml \
@@ -40,10 +68,13 @@ plots=True
 
 or
 
-
 ```bash
-docker run -it --rm --gpus all \
--v /tmp/best.pt:/best.pt:ro --entrypoint bash --shm-size=1G yolo-train-img -c \
+# Create the directories first otherwise the container user won't be able to write into them as they will be owned by root.
+mkdir ~/runs ~/data
+docker run -it --rm --gpus all --shm-size=1G \
+-v ~/runs:/workdev/runs \
+-v ~/data:/workdev/datasets \
+yolo-train-img -c \
 "
 yolo obb val \
 data=xView-patches-ship-sam.yaml \
@@ -53,35 +84,75 @@ imgsz=640 \
 batch=16 \
 plots=True
 "
+```
 
 ### Training a classification model
 
-#### Extract patches
+#### First extract patches from xView
 
 ```python
+import os
+os.chdir('./examples')
 from ultralytics.utils.sam_extractor import DatasetOBBExtractor
 from pathlib import Path
 final_dir = Path("/work3/dimda/ultralytics_dotav2/examples/datasets/xView-patches-ship-sam")
-output_dir = final_dir + "-crops"
-dat = DatasetOBBExtractor(model=None, dataset_dir=final_dir, output_dir=None, default_class=None, debug=False)
+output_dir = str(final_dir) + "-crops"
+dat = DatasetOBBExtractor(model=None, yaml_cfg="/work3/dimda/ultralytics_dotav2/ultralytics/cfg/datasets/xView-patches-ship-sam.yaml", dataset_dir=final_dir, output_dir=None, default_class=None, debug=False)
 dat.get_dataset_info()
 patches = dat.extract_patches(idxs=None, output_dir=output_dir)
-
-```
-
-#### Prepare dataset
-
-```python
 format_patches_for_image_classification(
     base_dir=output_dir,
     output_dir=output_dir,
     move=False)
 ```
 
+or
+
+```bash
+docker run -it --rm --gpus all --shm-size=1G \
+-v ~/runs:/workdev/runs \
+-v ~/data:/workdev/datasets \
+yolo-train-img -c \
+"
+import os
+os.chdir('./examples')
+from ultralytics.utils.sam_extractor import DatasetOBBExtractor
+from pathlib import Path
+final_dir = Path("/workdev/datasets/xView-patches-ship-sam")
+output_dir = final_dir + "-crops"
+dat = DatasetOBBExtractor(model=None, dataset_dir=final_dir, output_dir=None, default_class=None, debug=False)
+dat.get_dataset_info()
+patches = dat.extract_patches(idxs=None, output_dir=output_dir)
+format_patches_for_image_classification(
+    base_dir=output_dir,
+    output_dir=output_dir,
+    move=False)
+"
+```
+
 #### Train classifier
 
 ```python
-cd examples && python3 train_classifier.py
+python3 examples/train_classifier.py \
+    --data-dir=/work1/dimda/xView-patches-ship-sam-crops \
+    --project-name=test \
+    --wandb-mode=offline
+```
+
+or
+
+```bash
+mkdir ~/runs ~/data
+docker run -it --rm --gpus all --shm-size=1G \
+-v ~/runs:/workdev/runs \
+-v ~/data:/workdev/datasets \
+yolo-train-img -c \
+"
+python3 examples/train_classifier.py \
+    --data-dir=/workdev/datasets/xView-patches-ship-sam-crops \
+    --project-name=test \
+    --wandb-mode=offline
+"
 ```
 
 ### Releasing a dataset
