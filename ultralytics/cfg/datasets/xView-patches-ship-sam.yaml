@@ -35,8 +35,8 @@ download: |
   from PIL import Image
   import shutil
   Image.MAX_IMAGE_PIXELS = None # There is a security issue related to this.
-
   final_dir = Path(yaml['path'])
+  tmp_dir = '/tmp' / final_dir
   dir =  '/tmp' / Path('xView')
   if True:
     def convert_labels(fname=Path('xView/xView_train.geojson')):
@@ -127,13 +127,13 @@ download: |
 
     # split train and val set, with labels.
 
-    print(f"Removing {final_dir}")
-    shutil.rmtree(final_dir, ignore_errors=True)
-    final_dir.mkdir(parents=True, exist_ok=True)
-    print(f"Creating patched dataset in {final_dir}")
+    print(f"Removing {tmp_dir}")
+    shutil.rmtree(tmp_dir, ignore_errors=True)
+    tmp_dir.mkdir(parents=True, exist_ok=True)
+    print(f"Creating patched dataset in {tmp_dir}")
     split_trainval(
         data_root=dir,
-        save_dir=final_dir,
+        save_dir=tmp_dir,
         rates=[0.5, 1.0, 1.5],    # multi-scaleP
         gap=500,
         mapping={i:i for i in range(23,33)}
@@ -142,7 +142,7 @@ download: |
     # Split also test set, without labels.
     split_test(
         data_root=dir,
-        save_dir=final_dir,
+        save_dir=tmp_dir,
         rates=[0.5, 1.0, 1.5],    # multi-scale
         gap=500
     )
@@ -152,9 +152,9 @@ download: |
     model = SAM('sam_b.pt')
     model.info()
     debug = False
-    dataset_dir = final_dir
+    dataset_dir = tmp_dir
     sam_ext = 'sam-labels'
-    output_dir = final_dir / sam_ext
+    output_dir = tmp_dir / sam_ext
     dat = DatasetOBBExtractor(model=model,
     dataset_dir=str(dataset_dir),
     output_dir=str(output_dir),
@@ -164,6 +164,10 @@ download: |
     dat.get_dataset_info()
     list(dat.process(idxs=None))
     import subprocess
-    subprocess.run(['mv', str(final_dir / 'labels'), str(final_dir / 'labels-original')])
-    subprocess.run(['mv', str(output_dir / 'labels'), str(final_dir / 'labels')])
+    subprocess.run(['mv', str(tmp_dir / 'labels'), str(tmp_dir / 'labels-original')])
+    subprocess.run(['mv', str(output_dir / 'labels'), str(tmp_dir / 'labels')])
     subprocess.run(['rmdir', str(output_dir)])
+    print(f"Moving {tmp_dir} to {final_dir}")
+    subprocess.run(['mv', '-f', tmp_dir, final_dir])
+    # Clean-up OG xView
+    #subprocess.run(['rm', '-f', tmp_dir, dir])
