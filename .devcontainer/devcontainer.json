@@ -1,7 +1,7 @@
 {
     "name": "YOLO-dev",
-    "dockerFile": "./Dockerfile",
-    "context": ".",
+    "dockerFile": "../Dockerfile",
+    "context": "..",
     "runArgs": [
         "--gpus", "all", // Enable GPU support
         "--shm-size", "2g" // Increase shared memory
@@ -11,8 +11,11 @@
 		"vscode": {
 			// Set *default* container specific settings.json values on container create.
 			"settings": {
-				"python.defaultInterpreterPath": "/usr/local/bin/python"
+				"python.defaultInterpreterPath": "/usr/local/bin/python",
+                "terminal.integrated.shell.linux": "/bin/bash",
+                "terminal.integrated.defaultProfile.linux": "bash"
 			},
+
 
 			// Add the IDs of extensions you want installed when the container is created.
 			"extensions": [
@@ -21,16 +24,15 @@
 			]
 		}
 	},
-    // "mounts": [
-    //     "source=${localWorkspaceFolder},target=/workdev,type=bind,consistency=cached",
-    //     "source=/work3,target=/work3,type=bind,consistency=cached"
-    // ],
-    // "remoteUser": "root",
-    "workspaceFolder": "/workdev",
+    "mounts": [
+        "source=${localWorkspaceFolder},target=/home/userCoE/workdev,type=bind,consistency=cached"
+        // "source=/work3,target=/work3,type=bind,consistency=cached"
+    ],
+    "remoteUser": "userCoE",
+    "workspaceFolder": "/home/userCoE/workdev",
     "build": {
-        "target": "devcontainer",
-        "dockerfile": "./Dockerfile",
-        "context": ".",
-        "build": { "args": { "MYARG": "MYVALUE", "USER_ID": "${localEnv:UID}" } }
+        "dockerfile": "../Dockerfile",
+        "context": "..",
+        "build": { "args": { "GROUP_ID": "1000", "USER_ID": "1000" } }
     }
 }
