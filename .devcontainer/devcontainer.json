@@ -1,0 +1,36 @@
+{
+    "name": "YOLO-dev",
+    "dockerFile": "./Dockerfile",
+    "context": ".",
+    "runArgs": [
+        "--gpus", "all", // Enable GPU support
+        "--shm-size", "2g" // Increase shared memory
+    ],
+	"customizations": {
+		// Configure properties specific to VS Code.
+		"vscode": {
+			// Set *default* container specific settings.json values on container create.
+			"settings": {
+				"python.defaultInterpreterPath": "/usr/local/bin/python"
+			},
+
+			// Add the IDs of extensions you want installed when the container is created.
+			"extensions": [
+				"ms-python.python",
+				"ms-python.vscode-pylance"
+			]
+		}
+	},
+    // "mounts": [
+    //     "source=${localWorkspaceFolder},target=/workdev,type=bind,consistency=cached",
+    //     "source=/work3,target=/work3,type=bind,consistency=cached"
+    // ],
+    // "remoteUser": "root",
+    "workspaceFolder": "/workdev",
+    "build": {
+        "target": "devcontainer",
+        "dockerfile": "./Dockerfile",
+        "context": ".",
+        "build": { "args": { "MYARG": "MYVALUE", "USER_ID": "${localEnv:UID}" } }
+    }
+}

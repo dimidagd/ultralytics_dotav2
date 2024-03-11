@@ -21,6 +21,7 @@ shapely \
 pillow \
 evaluate \
 transformers[torch] \
+wandb \
 torchvision
 
 COPY . $workdev

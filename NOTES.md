@@ -93,7 +93,7 @@ plots=True
 ```python
 import os
 os.chdir('./examples')
-from ultralytics.utils.sam_extractor import DatasetOBBExtractor
+from ultralytics.utils.sam_extractor import DatasetOBBExtractor, format_patches_for_image_classification
 from pathlib import Path
 final_dir = Path("/work3/dimda/ultralytics_dotav2/examples/datasets/xView-patches-ship-sam")
 output_dir = str(final_dir) + "-crops"
@@ -112,14 +112,15 @@ or
 docker run -it --rm --gpus all --shm-size=1G \
 -v ~/runs:/workdev/runs \
 -v ~/data:/workdev/datasets \
+--entrypoint python3 \
 yolo-train-img -c \
 "
 import os
 os.chdir('./examples')
-from ultralytics.utils.sam_extractor import DatasetOBBExtractor
+from ultralytics.utils.sam_extractor import DatasetOBBExtractor, format_patches_for_image_classification
 from pathlib import Path
-final_dir = Path("/workdev/datasets/xView-patches-ship-sam")
-output_dir = final_dir + "-crops"
+final_dir = Path('/work3/dimda/ultralytics_dotav2/examples/datasets/xView-patches-ship-sam')
+output_dir = str(final_dir) + '-crops'
 dat = DatasetOBBExtractor(model=None, dataset_dir=final_dir, output_dir=None, default_class=None, debug=False)
 dat.get_dataset_info()
 patches = dat.extract_patches(idxs=None, output_dir=output_dir)
