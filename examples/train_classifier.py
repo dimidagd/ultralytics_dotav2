@@ -7,12 +7,12 @@ import numpy as np
 import wandb
 from datasets import load_dataset, load_from_disk
 from transformers import AutoImageProcessor
-from torchvision.transforms import Compose, Normalize, RandomResizedCrop, ToTensor
+from torchvision.transforms import Compose, Normalize
 from transformers import DefaultDataCollator
 import evaluate
 from transformers import AutoModelForImageClassification, Trainer, TrainingArguments
 import argparse
-from torchvision.transforms import Compose, RandomHorizontalFlip, RandomVerticalFlip, RandomRotation, RandomResizedCrop, ToTensor
+from torchvision.transforms import RandomHorizontalFlip, RandomVerticalFlip, RandomRotation, RandomResizedCrop, ToTensor
 
 from transformers import EarlyStoppingCallback # https://stackoverflow.com/a/69087153
 
@@ -103,10 +103,9 @@ if __name__ == "__main__":
     now_str = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     logger.info(f"Starting experiment named {now_str} with project name {PROJNAME}")
     # Init wandb
-    run = wandb.init(project=PROJNAME, name=now_str)
+    run = wandb.init(project=PROJNAME, name=now_str,settings=wandb.Settings(code_dir="."))
     # Log code excluding datasets and runs
-    run.log_code("../",exclude_fn=lambda path,
-                root: os.path.relpath(path, root).startswith("datasets") or os.path.relpath(path, root).startswith("runs"))
+    #run.log_code("./",exclude_fn=lambda path,root: os.path.relpath(path, root).startswith("examples/datasets") or os.path.relpath(path, root).startswith("runs"))
     run.config.update({"backbone": BBONE_CHECKPOINT})
     logger.info("Loading dataset")
     dataset = smart_load(DATA_DIR, DATASET_CACHE_DIR)

@@ -8,7 +8,7 @@ docker build --build-arg USER_ID=$(id -u) --build-arg GROUP_ID=$(id -g) -t yolo-
 
 ```bash
 yolo obb train \
-    data=xView-patches.yaml \
+    data=DOTAv2.0-patches-ship.yaml \
     pretrained=False \
     device=0 \
     imgsz=640 \
@@ -20,10 +20,10 @@ yolo obb train \
 or
 
 ```bash
-docker run -it --rm --gpus all --shm-size=1G yolo-train-img -c \
+docker run -it --rm --gpus all --shm-size=5G yolo-train-img -c \
 "
 yolo obb train \
-    data=xView-patches-ship-sam.yaml \
+    data=DOTAv2.0-patches-ship.yaml \
     pretrained=False \
     device=0 \
     imgsz=640 \
@@ -38,13 +38,13 @@ yolo obb train \
 ```bash
 # Create the directories first otherwise the container user won't be able to write into them as they will be owned by root.
 mkdir ~/runs ~/data
-docker run -it --rm --gpus all --shm-size=1G \
--v ~/runs:/workdev/runs \
--v ~/data:/workdev/datasets \
+docker run -it --rm --gpus all --shm-size=5G \
+-v ~/runs:/home/userCoE/workdev/runs \
+-v ~/data:/home/userCoE/workdev/datasets \
 yolo-train-img -c \
 "
 yolo obb train \
-    data=xView-patches.yaml \
+    data=DOTAv2.0-patches-ship.yaml \
     pretrained=False \
     device=0 \
     imgsz=640 \
@@ -71,9 +71,9 @@ or
 ```bash
 # Create the directories first otherwise the container user won't be able to write into them as they will be owned by root.
 mkdir ~/runs ~/data
-docker run -it --rm --gpus all --shm-size=1G \
--v ~/runs:/workdev/runs \
--v ~/data:/workdev/datasets \
+docker run -it --rm --gpus all --shm-size=5G \
+-v ~/runs:/home/userCoE/workdev/runs \
+-v ~/data:/home/userCoE/workdev/datasets \
 yolo-train-img -c \
 "
 yolo obb val \
@@ -92,7 +92,6 @@ plots=True
 
 ```python
 import os
-os.chdir('./examples')
 from ultralytics.utils.sam_extractor import DatasetOBBExtractor, format_patches_for_image_classification
 from pathlib import Path
 final_dir = Path("/work3/dimda/ultralytics_dotav2/examples/datasets/xView-patches-ship-sam")
@@ -109,19 +108,18 @@ format_patches_for_image_classification(
 or
 
 ```bash
-docker run -it --rm --gpus all --shm-size=1G \
--v ~/runs:/workdev/runs \
--v ~/data:/workdev/datasets \
+docker run -it --rm --gpus all --shm-size=5G \
+-v ~/runs:/home/userCoE/workdev/runs \
+-v ~/data:/home/userCoE/workdev/datasets \
 --entrypoint python3 \
 yolo-train-img -c \
 "
 import os
-os.chdir('./examples')
 from ultralytics.utils.sam_extractor import DatasetOBBExtractor, format_patches_for_image_classification
 from pathlib import Path
 final_dir = Path('/work3/dimda/ultralytics_dotav2/examples/datasets/xView-patches-ship-sam')
 output_dir = str(final_dir) + '-crops'
-dat = DatasetOBBExtractor(model=None, dataset_dir=final_dir, output_dir=None, default_class=None, debug=False)
+dat = DatasetOBBExtractor(model=None, yaml_cfg='/work3/dimda/ultralytics_dotav2/ultralytics/cfg/datasets/xView-patches-ship-sam.yaml', dataset_dir=final_dir, output_dir=None, default_class=None, debug=False)
 dat.get_dataset_info()
 patches = dat.extract_patches(idxs=None, output_dir=output_dir)
 format_patches_for_image_classification(
@@ -135,7 +133,7 @@ format_patches_for_image_classification(
 
 ```python
 python3 examples/train_classifier.py \
-    --data-dir=/work1/dimda/xView-patches-ship-sam-crops \
+    --data-dir=/work3/dimda/ultralytics_dotav2/examples/datasets/xView-patches-ship-sam-crops \
     --project-name=test \
     --wandb-mode=offline
 ```
@@ -144,13 +142,13 @@ or
 
 ```bash
 mkdir ~/runs ~/data
-docker run -it --rm --gpus all --shm-size=1G \
--v ~/runs:/workdev/runs \
--v ~/data:/workdev/datasets \
+docker run -it --rm --gpus all --shm-size=5G \
+-v ~/runs:/home/userCoE/workdev/runs \
+-v ~/data:/home/userCoE/workdev/datasets \
 yolo-train-img -c \
 "
 python3 examples/train_classifier.py \
-    --data-dir=/workdev/datasets/xView-patches-ship-sam-crops \
+    --data-dir=/home/userCoE/workdev/datasets/xView-patches-ship-sam-crops \
     --project-name=test \
     --wandb-mode=offline
 "
@@ -164,12 +162,12 @@ python3 examples/train_classifier.py \
 Follow the recipe below from
 
 ```bash
-export GITREPO=GITDIR DATASET_DIR=/mydatasetDIR OUTPUTFILE=xView.zip TMPDIR=/tmp/splits
-zip -r /tmp/$OUTPUTFILE ./ && \
+export GITREPO=/work3/dimda/ultralytics_dotav2 DATASET_DIR=/work3/dimda/ultralytics_dotav2/examples/datasets/hrf OUTPUTFILE=hrf2016.zip TMPDIR=/tmp/splits
+cd $DATASET_DIR && zip -r /tmp/$OUTPUTFILE ./ && \
 rm -rf $TMPDIR && mkdir -p $TMPDIR
 split -d -b 1G /tmp/$OUTPUTFILE $TMPDIR/$OUTPUTFILE. && \
 cd $TMPDIR && \
 md5sum ./* > md5list && \
 cd $GITREPO && \
-gh release create xView $TMPDIR* --title "$OUTPUTFILE dataset" --notes "This release includes files with sub 1gb parts"
+gh release create hrf2016 $TMPDIR/* --title "$OUTPUTFILE dataset" --notes "This release includes files with sub 1gb parts"
 ```
