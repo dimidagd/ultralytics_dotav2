@@ -37,7 +37,7 @@ MD5SUM_DATASET_HASH="a09649a06b3e52a7d3d54e9d2f765b2c"
 
 DATA_DIR=/tmp/downloads/$dataset_name
 mkdir -p $DATA_DIR
-ZIPFILEBASENAME=xView.zip
+ZIPFILEBASENAME=dl-$dataset_name.zip
 md5file=$DATA_DIR/$ZIPFILEBASENAME.md5list
 #Check if url is filepath
 if [ -d $url ]; then
@@ -46,7 +46,7 @@ if [ -d $url ]; then
 else
     echo "URL $url is not a dir, using as is"
 fi
-curl -L ${url}md5list -o $md5file -# && echo "Download $url$md5list into $md5file successful."
+curl -L ${url}md5list -o $md5file -# && echo "Download $md5file into $md5file successful."
 zipfiles=
 while read -r line; do
     md5sum=$(echo $line | awk '{print $1}')

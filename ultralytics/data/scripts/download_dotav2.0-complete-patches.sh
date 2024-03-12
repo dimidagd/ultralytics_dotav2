@@ -12,17 +12,25 @@
 
 
 url=$1 # Base dataset url
+input_dir=$2
+parent_dataset_name=$3
+
+if [ -z "$parent_dataset_name" ]; then
+    parent_dataset_name=DOTA-v2.0
+fi
 if [ -z "$url" ]; then
     url=https://github.com/dimidagd/ultralytics_dotav2/releases/download/dota-v2.0/
 fi
 # Save git root path to a variable
 GIT_ROOT=$(git rev-parse --show-toplevel)
-parent_dataset_name=DOTA-v2.0
 dataset_name=$parent_dataset_name-patches
 ULTRALYTICS_DS_DIR=$GIT_ROOT/datasets
 d=/tmp/datasets # unzip directory XXX: Might have to be removed somewhere else for ultralytics to actually find them
 mkdir -p $d
-input_dir=$d/$parent_dataset_name
+
+if [ -z "$input_dir" ]; then
+    input_dir=$d/$parent_dataset_name
+fi
 output_dir=$ULTRALYTICS_DS_DIR/$dataset_name
 rm -rf $output_dir && mkdir -p $output_dir
 

@@ -16,7 +16,6 @@ set -p
 url=$1 # Base dataset url
 dataset_dir=$2 # unzip directory
 dataset_name=$3 # dataset name
-
 if [ -z "$url" ]; then
     url=https://github.com/dimidagd/ultralytics_dotav2/releases/download/dota-v2.0/
 fi
@@ -30,13 +29,13 @@ if [ -z "$dataset_dir" ]; then
 fi
 MD5SUM_DATASET_HASH="a83b375523f0951fb269f94b49b2d31b"
 # Download/unzip images and labels
-
+ZIPFILEBASENAME=ds-$dataset_name.zip
 d=$GIT_ROOT/datasets # unzip directory # unzip directory XXX: Might have to be removed somewhere else for ultralytics to actually find them
 DATA_DIR=/tmp/downloads/$dataset_name
 mkdir -p $DATA_DIR
 
 
-ZIPFILEBASENAME=dotav2.zip
+
 #Check if url is filepath
 if [ -d $url ]; then
     url=file://$url
@@ -74,10 +73,6 @@ ZIPFILE=$DATA_DIR/$ZIPFILEBASENAME
 echo "Combining files into $ZIPFILE" && \
 cat $zipfiles | pv -s $(printf "%.0f" $(du -sb $zipfiles | awk '{total += $1} END {print total}')) > $ZIPFILE && \
 echo "Combined all chunks into $ZIPFILE"
-
-echo "Checking MD5sum of $ZIPFILE" && \
-md5sum $ZIPFILE | awk '{print $1}' | grep -q $MD5SUM_DATASET_HASH && \
-echo "MD5sum match" || echo "MD5sum mismatch, redownload the files."
 
 # && \
 # rm $ZIPFILE.?? && \
