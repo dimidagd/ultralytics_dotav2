@@ -25,13 +25,12 @@ from PIL import Image
 from pathlib import Path
 from tqdm import tqdm
 import yaml
-
+from typing import Union
 import numpy
 from ultralytics import SAM
 from ultralytics.utils.instance import Bboxes, Instances
 from ultralytics.utils.ops import xyxyxyxy2xywhr
 from ultralytics.data.split_dota import load_yolo_dota
-
 
 import os
 import shutil
@@ -52,9 +51,18 @@ def format_patches_for_image_classification(base_dir, output_dir, move=False):
             shutil.copy(f"{base_dir}/{file}", f"{class_dir}/{file}")
 
 class Points:
-    def __init__(self, points: list[list[int]], normalized):
-        "Accepts a list of list of xyxy points and a boolean normalized flag"
-        self.points = points
+    def __init__(self, points: Union[list[list[int]],np.ndarray], normalized):
+        "Accepts a list of list of xyxy points or an ndarray, and a boolean normalized flag"
+        if isinstance(points, np.ndarray):
+            assert points.ndim == 2, "The points must be a 2D array"
+            assert points.shape[1] == 2, "The points must have 2 columns"
+            # Reshape nx2 array to list of tuples
+            self.points = points.tolist()
+        else:
+            assert(isinstance(points, list)), "The points must be a list"
+            assert(all(isinstance(point, list) for point in points)), "The points must be a list of lists"
+            assert(all(len(point) == 2 for point in points)), "Each point must be a list of 2 elements"
+            self.points = points
         self.normalized = normalized
     def denormalize(self, w,h):
         # self.points is a list of list
@@ -66,27 +74,59 @@ class Points:
         if not self.normalized:
             self.points = [[x / w, y / h] for x, y in self.points]
             self.normalized = True
+    def asarray(self):
 
+        return np.array(self.points)
 
-def get_enclosing_points(mask: torch.Tensor) -> np.ndarray:
+_formats = ["xyxyxyxy"]
+_dims = {"xyxyxyxy": 8}
+
+class OBBox:
+    def __init__(self, points: np.ndarray, format, normalized) -> None:
+        # Assert format in xyxyxyxy
+        assert format in _formats, f"Invalid bounding box format: {format}, format must be one of {_formats}"
+        _points = points[None, :] if points.ndim == 1 else points
+        assert _points.ndim == 2
+        assert _points.shape[1] == _dims[format], f"Invalid bounding box shape: {_points.shape}, must be (N, {_dims[format]})"
+        if format == "xyxyxyxy":
+            self._points = Points(_points.reshape(-1,2), normalized)
+            self.points_callback = lambda x : x.asarray().reshape(-1,8)
+        self.format = format
+        self.normalized = normalized
+    def normalize(self, w,h):
+        if not self.normalized:
+            self._points.normalize(w, h)
+            self.normalized = True
+    def denormalize(self, w,h):
+        if self.normalized:
+            self._points.denormalize(w, h)
+            self.normalized = False
+
+    @property
+    def points(self):
+        return self.points_callback(self._points)
+
+def get_enclosing_points(mask: torch.Tensor) ->  Union[np.ndarray, bool]:
     "Accepts a mask tensor HW of type bool, and returns the 4 points of the enclosing rectangle as nd.array"
     # Convert the mask to a numpy array if it's a PyTorch tensor
     if isinstance(mask, torch.Tensor):
          mask = (mask.cpu().numpy() * 255).astype(np.uint8)
-
     # Find the contours in the mask
     contours, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
 
     # Get the contour with the maximum area (in case there are multiple contours)
-    max_contour = max(contours, key=cv2.contourArea)
+    if len(contours):
+        max_contour = max(contours, key=cv2.contourArea)
 
-    # Get a rotated rectangle that encloses the contour
-    rect = cv2.minAreaRect(max_contour)
+        # Get a rotated rectangle that encloses the contour
+        rect = cv2.minAreaRect(max_contour)
 
-    # Get the 4 points of the rectangle
-    points = cv2.boxPoints(rect)
+        # Get the 4 points of the rectangle
+        points = cv2.boxPoints(rect)
 
-    return points.reshape(1,-1)
+        return points.reshape(1,-1)
+    else:
+        return False
 
 def get_point_prompts(lb_path, normalized):
     "Accepts lb_path containing labels, each labels is a line with xyxy box coordinates"
@@ -165,9 +205,19 @@ def get_img_size(img_path: str) -> tuple[int, int]:
 
 
 def check_if_inside(point, box):
-    x, y = point
-    x1, y1, x2, y2 = box
-    return x >= x1 and x <= x2 and y >= y1 and y <= y2
+    " Box can be in xyxy format or xyxyxyxy format, point is a tuple of x,y coordinates"
+    if len(box) == 4: # xyxy format
+        x, y = point
+        x1, y1, x2, y2 = box
+        is_inside = x1 <= x <= x2 and y1 <= y <= y2
+    elif len(box) == 8: # xyxyxyxy format
+        x, y = point
+        x1, y1, x2, y2, x3, y3, x4, y4 = box
+        is_inside = cv2.pointPolygonTest(np.array([[x1, y1], [x2, y2], [x3, y3], [x4, y4]]), (x, y), False) >= 0
+    else:
+        raise NotImplementedError
+    return is_inside
+
 
 def associate_points_to_boxes(points,boxes, og_labels, no_match_class):
                 " Associate boxes to first matching OG label"
@@ -329,9 +379,11 @@ class DatasetOBBExtractor:
             croped_image_segments = crop_image(im_path, lb_path, output_dir)
             crop_fpaths.append(croped_image_segments)
         return crop_fpaths
-    def get_dataset_info(self,fast=False):
+    def get_dataset_info(self,fast=False, splits=["train"]):
         " Get the dataset information, filter out empty labels"
-        self.data_info = load_yolo_dota(self.dataset_dir,fast=fast)
+        self.data_info = []
+        for split in splits:
+            self.data_info += load_yolo_dota(self.dataset_dir,split=split, fast=fast)
         self.data_info = list(filter(lambda x: len(x["label"]) > 0, self.data_info))
     def process(self, idxs=None):
         dataset = self.data_info
@@ -372,15 +424,19 @@ class DatasetOBBExtractor:
             r = res[0]
 
             # Get boxes from masks XXX: Some masks are sometimes disjoint even though they correspond to the same object.
-            obb_boxes = np.vstack([get_enclosing_points(mask) for mask in r.masks.data])
+            rectangle_pts = [get_enclosing_points(mask) for mask in r.masks.data]
+            rectangle_pts = [rect for rect in rectangle_pts if rect is not False]
+            if len(rectangle_pts) < 1:
+                print(f"Skipping {lb_path} because no masks found")
+                continue
+            obb_boxes = np.vstack(rectangle_pts)
             # Get original label path
             lb_relative_path = Path(data["filepath"]).relative_to(Path(data["filepath"]).parents[2])
             lb_abs_path = Path(self.output_dir) / lb_relative_path
             # New label path
             output_label = str(lb_abs_path.with_suffix('.txt')).replace("images", "labels")
-
             # Transfer old label classes to obb boxes by association.
-            labels_ = associate_points_to_boxes(points.points, xyxyboxes.bboxes, labels_reduced, self.IDX_NAMES[self.default_class])
+            labels_ = associate_points_to_boxes(points.points, obb_boxes, labels_reduced, self.IDX_NAMES[self.default_class])
             # Write label file
             obb_boxes_normalized = obb_boxes.reshape(-1,2)/np.array([w,h])
             obb_boxes_normalized = obb_boxes_normalized.reshape(-1,8)
@@ -395,9 +451,8 @@ class DatasetOBBExtractor:
         lb = np.array([labels]).T
         res.names = self.CLASS_NAMES
         obb_labels_xywhrclass = np.hstack((obb_boxes_xywhr, np.zeros_like(lb), np.ones_like(lb), lb)) # [xywh, rotation,] track_id, conf, cls
-        xyxy_labels = np.hstack((axes_boxes, np.zeros_like(lb), np.ones_like(lb), lb ))
+        xyxy_labels = np.hstack((axes_boxes, np.zeros((axes_boxes.shape[0],1)), np.ones((axes_boxes.shape[0],1)), np.zeros((axes_boxes.shape[0],1)) ))
         res.update(boxes=xyxy_labels)
-
         og_det_path = str(Path(output_label).with_suffix(".jpg")).replace("labels","debug")
         obb_det_path = str(Path(output_label).with_suffix(".obb.jpg")).replace("labels","debug")
         res.plot(save=True, filename=og_det_path)  # plot a BGR numpy array of predictions

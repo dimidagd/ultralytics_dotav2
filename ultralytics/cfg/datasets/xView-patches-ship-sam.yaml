@@ -161,7 +161,7 @@ download: |
     default_class="ship", # keep_only_classes=[0],
     yaml_cfg=yaml,
     debug=debug)
-    dat.get_dataset_info()
+    dat.get_dataset_info(splits=['train', 'val'])
     list(dat.process(idxs=None))
     import subprocess
     subprocess.run(['mv', str(tmp_dir / 'labels'), str(tmp_dir / 'labels-original')])

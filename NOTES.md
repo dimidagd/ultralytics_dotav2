@@ -162,12 +162,13 @@ python3 examples/train_classifier.py \
 Follow the recipe below from
 
 ```bash
-export GITREPO=/work3/dimda/ultralytics_dotav2 DATASET_DIR=/work3/dimda/ultralytics_dotav2/examples/datasets/hrf OUTPUTFILE=hrf2016.zip TMPDIR=/tmp/splits
+export DS_NAME=HRSC2016
+export GITREPO=/work3/dimda/ultralytics_dotav2 DATASET_DIR=/work3/dimda/ultralytics_dotav2/examples/datasets/hsrc-ds/HRSC2016 OUTPUTFILE=$DS_NAME.zip TMPDIR=/tmp/splits
 cd $DATASET_DIR && zip -r /tmp/$OUTPUTFILE ./ && \
 rm -rf $TMPDIR && mkdir -p $TMPDIR
 split -d -b 1G /tmp/$OUTPUTFILE $TMPDIR/$OUTPUTFILE. && \
 cd $TMPDIR && \
 md5sum ./* > md5list && \
 cd $GITREPO && \
-gh release create hrf2016 $TMPDIR/* --title "$OUTPUTFILE dataset" --notes "This release includes files with sub 1gb parts"
+gh release create $DS_NAME $TMPDIR/* --title "$OUTPUTFILE dataset" --notes "This release includes files with sub 1gb parts and relates to the $DS_NAME dataset."
 ```
