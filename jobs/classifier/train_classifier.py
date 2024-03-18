@@ -12,8 +12,8 @@ from transformers import DefaultDataCollator
 import evaluate
 from transformers import AutoModelForImageClassification, Trainer, TrainingArguments
 import argparse
-from torchvision.transforms import RandomHorizontalFlip, RandomVerticalFlip, RandomRotation, RandomResizedCrop, ToTensor
-
+from torchvision.transforms import RandomResizedCrop, ToTensor
+import torchvision.transforms as transforms
 from transformers import EarlyStoppingCallback # https://stackoverflow.com/a/69087153
 
 accuracy = evaluate.load("accuracy")
@@ -85,8 +85,34 @@ if __name__ == "__main__":
     parser.add_argument('--bbone-checkpoint', type=str, default="google/efficientnet-b0",help='Backbone checkpoint for image processor \
                         eg [google/vit-base-patch32-224-in21k | google/efficientnet-b0 ]. \
                         Or could be any other checkpoint supporting AutoImageProcessor')
+
+    # Hyper params
+    # Add augmentation parameters as command-line arguments
+    parser.add_argument('--rotation-degrees', type=int, default=180, help='Rotation degrees for augmentation')
+    parser.add_argument('--scale-min', type=float, default=0.9, help='Minimum scale factor for augmentation')
+    parser.add_argument('--scale-max', type=float, default=1.0, help='Maximum scale factor for augmentation')
+    parser.add_argument('--flip', type=float, default=0.5, help='Probability of random horizontal and vertical flipping')
+    parser.add_argument('--shear', type=float, default=20, help='Shear factor for augmentation')
+    parser.add_argument('--translate', type=float, default=0.1, help='Translation factor for augmentation')
+    parser.add_argument('--brightness', type=float, default=0.1, help='Brightness factor for augmentation')
+    parser.add_argument('--contrast', type=float, default=0.1, help='Contrast factor for augmentation')
+    parser.add_argument('--grad-accum-steps', type=int, default=1, help='Gradient accumulation steps for training')
+    parser.add_argument('--learning-rate', type=float, default=5e-5, help='Learning rate for training')
+    parser.add_argument('--batch-size', type=int, default=0, help='Batch size for training')
     args = parser.parse_args()
 
+    # Define augmentation parameters based on CLI arguments
+    rotation_degrees = args.rotation_degrees
+    scale_min = args.scale_min
+    scale_max = args.scale_max
+    flip = args.flip
+    shear = args.shear
+    translate = args.translate
+    brightness = args.brightness
+    contrast = args.contrast
+    grad_accum_steps = args.grad_accum_steps
+    learning_rate = args.learning_rate
+    batch_size_args = args.batch_size
     # Get the data directory from the command line arguments
     DATA_DIR = args.data_dir
     PROJNAME = args.project_name
@@ -94,6 +120,13 @@ if __name__ == "__main__":
     WANDB_MODE=args.wandb_mode
     DATASET_CACHE_DIR = DATA_DIR +"-hf-cache"
     BBONE_CHECKPOINT = args.bbone_checkpoint
+
+    checkpoint = BBONE_CHECKPOINT
+    if not batch_size_args:
+        batch_size = BATCHSZ_PER_MODEL[checkpoint]
+    else:
+        batch_size = batch_size_args
+
     os.environ["WANDB_MODE"] = os.environ.get("WANDB_MODE", WANDB_MODE)
     os.environ["WANDB_LOG_MODEL"] = "end" # end |checkpoint|false. "end" should be used with load_best_model_at_end=True in TrainingArgs
 
@@ -143,7 +176,6 @@ if __name__ == "__main__":
     ship = dataset["train"].train_test_split(test_size=0.2)
 
     # Load the image processor backbone
-    checkpoint = BBONE_CHECKPOINT
     logger.info(f"Loading image processor backbone {checkpoint}")
     image_processor = AutoImageProcessor.from_pretrained(checkpoint)
 
@@ -155,15 +187,20 @@ if __name__ == "__main__":
         else (image_processor.size["height"], image_processor.size["width"])
     )
 
-    # _transforms = Compose([RandomResizedCrop(size), ToTensor(), normalize]) # Simple transform
+    _transforms = Compose([RandomResizedCrop(size), ToTensor(), normalize]) # Simple transform
 
     # More capable transform
+    interpolation_mode = transforms.InterpolationMode.BILINEAR
     _transforms = Compose([
-        RandomHorizontalFlip(),
-        RandomVerticalFlip(),
-        RandomRotation(180),  # Rotate within -30 to +30 degrees
-        RandomResizedCrop(size),
-        ToTensor(),
+        transforms.RandomAffine(degrees=0, scale=(scale_min, scale_max), interpolation=interpolation_mode),
+        transforms.RandomRotation(degrees=rotation_degrees),                   # Random rotation
+        transforms.RandomResizedCrop(size=size, scale=(0.9, 1.0), ratio=(0.9, 1.1),interpolation=interpolation_mode),           # Random cropping and resizing
+        transforms.RandomHorizontalFlip(p=flip),
+        transforms.RandomVerticalFlip(p=flip),                       # Random horizontal flipping
+        transforms.ColorJitter(brightness=brightness, contrast=contrast),    # Random brightness and contrast adjustment
+        transforms.GaussianBlur(kernel_size=3),                  # Random Gaussian blur
+        transforms.RandomAffine(degrees=0, translate=(translate, translate), shear=shear,interpolation=interpolation_mode),            # Random affine transformation (shearing)
+        transforms.ToTensor(),
         normalize
     ])
 
@@ -181,7 +218,6 @@ if __name__ == "__main__":
     )
 
     data_collator = DefaultDataCollator()
-    batch_size = BATCHSZ_PER_MODEL[checkpoint]
     steps_per_epoch = round(len(ship["train"]) / batch_size) or 1
     logger.info(f"Will use backbone {checkpoint} with batch size {batch_size}")
 

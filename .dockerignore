@@ -1,8 +1,7 @@
 Dockerfile
 **/wandb
 **/runs
-examples/datasets
-./datasets
+datasets
 **/artifacts
 **/.ruff_cache
 **/__pycache__

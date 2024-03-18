@@ -98,7 +98,7 @@ def load_yolo_dota(data_root, split="train", fast=False):
     return annos
 
 
-def get_windows(im_size, crop_sizes=[1024], gaps=[200], im_rate_thr=0.6, eps=0.01):
+def get_windows(im_size, crop_sizes=[1024], gaps=[200], im_rate_thr=0.6, eps=0.01, whole_image=False):
     """
     Get the coordinates of windows.
 
@@ -110,6 +110,8 @@ def get_windows(im_size, crop_sizes=[1024], gaps=[200], im_rate_thr=0.6, eps=0.0
     """
     h, w = im_size
     windows = []
+    if whole_image:
+        return np.array([[0, 0, w, h]], dtype=np.int64)
     for crop_size, gap in zip(crop_sizes, gaps):
         assert crop_size > gap, f"invalid crop_size gap pair [{crop_size} {gap}]"
         step = crop_size - gap
@@ -141,16 +143,19 @@ def get_windows(im_size, crop_sizes=[1024], gaps=[200], im_rate_thr=0.6, eps=0.0
     return windows[im_rates > im_rate_thr]
 
 
-def get_window_obj(anno, windows, iof_thr=0.7):
+def get_window_obj(anno, windows, iof_thr=0.7, whole_image=False):
     """Get objects for each window."""
     h, w = anno["ori_size"]
     label = anno["label"]
     if len(label):
         label[:, 1::2] *= w
         label[:, 2::2] *= h
-        iofs = bbox_iof(label[:, 1:], windows)
-        # Unnormalized and misaligned coordinates
-        return [(label[iofs[:, i] >= iof_thr]) for i in range(len(windows))]  # window_anns
+        if not whole_image:
+            iofs = bbox_iof(label[:, 1:], windows)
+            # Unnormalized and misaligned coordinates
+            return [(label[iofs[:, i] >= iof_thr]) for i in range(len(windows))]  # window_anns
+        else:
+            return [(label[:]) for i in range(len(windows))]
     else:
         return [np.zeros((0, 9), dtype=np.float32) for _ in range(len(windows))]  # window_anns
 
@@ -198,11 +203,11 @@ def crop_and_save(anno, windows, window_objs, im_dir, lb_dir):
                 f.write(f"{int(lb[0])} {' '.join(formatted_coords)}\n")
 
 def process_anno(args):
-    anno, crop_sizes, gaps, im_dir, lb_dir = args
+    anno, crop_sizes, gaps, im_dir, lb_dir, whole_image = args
     if anno is None:
         return True
-    windows = get_windows(anno["ori_size"], crop_sizes, gaps)
-    window_objs = get_window_obj(anno, windows)
+    windows = get_windows(anno["ori_size"], crop_sizes, gaps, whole_image=whole_image)
+    window_objs = get_window_obj(anno, windows, whole_image=whole_image)
     crop_and_save(anno, windows, window_objs, str(im_dir), str(lb_dir))
     return True
 
@@ -235,7 +240,7 @@ def apply_mapping(annos, mapping):
             new_annos.append(None)
     return new_annos
 
-def split_images_and_labels(data_root, save_dir, split="train", crop_sizes=[1024], gaps=[200], mapping=None):
+def split_images_and_labels(data_root, save_dir, split="train", crop_sizes=[1024], gaps=[200], mapping=None, whole_image=False):
     """
     Split both images and labels.
 
@@ -262,9 +267,10 @@ def split_images_and_labels(data_root, save_dir, split="train", crop_sizes=[1024
     # Apply mapping of original labels to target labels, useful when
     if mapping:
         annos = apply_mapping(annos, mapping)
+    args = [(anno, crop_sizes, gaps, im_dir, lb_dir, whole_image) for anno in annos]
     import multiprocessing
     pool = multiprocessing.Pool()
-    args = [(anno, crop_sizes, gaps, im_dir, lb_dir) for anno in annos]
+
     mapped_values = list(tqdm(pool.imap_unordered(process_anno, args,), total=len(args)))
     pool.close()
     # assert all mapped values are true
@@ -275,7 +281,7 @@ def split_images_and_labels(data_root, save_dir, split="train", crop_sizes=[1024
             raise value
     print(f"Done splitting {split} into patches!")
 
-def split_trainval(data_root, save_dir, crop_size=1024, gap=200, rates=[1.0], mapping=None):
+def split_trainval(data_root, save_dir, crop_size=1024, gap=200, rates=[1.0], mapping=None, whole_image=False):
     """
     Split train and val set of DOTA.
 
@@ -302,12 +308,12 @@ def split_trainval(data_root, save_dir, crop_size=1024, gap=200, rates=[1.0], ma
         crop_sizes.append(int(crop_size / r))
         gaps.append(int(gap / r))
     for split in ["train", "val"]:
-        split_images_and_labels(data_root, save_dir, split, crop_sizes, gaps, mapping=mapping)
+        split_images_and_labels(data_root, save_dir, split, crop_sizes, gaps, mapping=mapping, whole_image=whole_image)
 
 def crop_and_save_patches(args):
-    im_file, save_dir, crop_sizes, gaps = args
+    im_file, save_dir, crop_sizes, gaps, whole_image = args
     w, h = exif_size(Image.open(im_file))
-    windows = get_windows((h, w), crop_sizes=crop_sizes, gaps=gaps)
+    windows = get_windows((h, w), crop_sizes=crop_sizes, gaps=gaps, whole_image=whole_image)
     im = cv2.imread(im_file)
     name = Path(im_file).stem
     for window in windows:
@@ -316,7 +322,7 @@ def crop_and_save_patches(args):
         patch_im = im[y_start:y_stop, x_start:x_stop]
         cv2.imwrite(str(save_dir / f"{new_name}.jpg"), patch_im)
 
-def split_test(data_root, save_dir, crop_size=1024, gap=200, rates=[1.0]):
+def split_test(data_root, save_dir, crop_size=1024, gap=200, rates=[1.0], whole_image=False):
     """
     Split test set of DOTA, labels are not included within this set.
 
@@ -340,7 +346,7 @@ def split_test(data_root, save_dir, crop_size=1024, gap=200, rates=[1.0]):
     im_dir = Path(data_root) / "images" / "test"
     assert im_dir.exists(), f"Can't find {im_dir}, please check your data root."
     im_files = glob(str(im_dir / "*"))
-    args = [(im_file, save_dir, crop_sizes, gaps) for im_file in im_files]
+    args = [(im_file, save_dir, crop_sizes, gaps, whole_image) for im_file in im_files]
 
     import multiprocessing
     pool = multiprocessing.Pool()

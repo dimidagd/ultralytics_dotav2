@@ -60,7 +60,6 @@ class Points:
             self.points = points.tolist()
         else:
             assert(isinstance(points, list)), "The points must be a list"
-            assert(all(isinstance(point, list) for point in points)), "The points must be a list of lists"
             assert(all(len(point) == 2 for point in points)), "Each point must be a list of 2 elements"
             self.points = points
         self.normalized = normalized
@@ -273,17 +272,23 @@ def crop_quadrilateral(image, points):
     # Width is euclidean distance between top-left and topright points
     width = numpy.sqrt((points[1][0] - points[0][0])**2 + (points[1][1] - points[0][1])**2)
     # Height is euclidean distance between top-left and bottom-left points
-    height = numpy.sqrt((points[2][0] - points[0][0])**2 + (points[2][1] - points[0][1])**2)
-    output_size = (int(width), int(height))
+    height = numpy.sqrt((points[3][0] - points[0][0])**2 + (points[3][1] - points[0][1])**2)
 
-    output_points = [(0, 0), (width, 0), (width, height), (0, height)] #  top-left, top-right, bottom-right, bottom-left.
-    try:
-        coeffs = find_coeffs(
-        output_points,
-        points)
-    except numpy.linalg.LinAlgError: # Singula rmatrix in coeffs calculation
-        return None
-    transform = image.transform(output_size, Image.PERSPECTIVE, coeffs)
+    # output_size = (int(width), int(height))
+
+    # output_points = [(0, 0), (width, 0), (width, height), (0, height)] #  top-left, top-right, bottom-right, bottom-left.
+    # try:
+    #     coeffs = find_coeffs(
+    #     output_points,
+    #     points)
+    # except numpy.linalg.LinAlgError: # Singula rmatrix in coeffs calculation
+    #     return None
+    #transform = image.transform(output_size, Image.PERSPECTIVE, coeffs)
+
+    # Crop image based on min max coordinates of points
+    left, upper, right, lower = min(points, key=lambda x: x[0])[0], min(points, key=lambda x: x[1])[1], max(points, key=lambda x: x[0])[0], max(points, key=lambda x: x[1])[1]
+    transform = image.crop((left, upper, right, lower))
+
     return transform
 
 def crop_image(im_path, lb_path, output_dir):
@@ -320,7 +325,7 @@ def crop_image(im_path, lb_path, output_dir):
         # Crop the image
         crop = crop_quadrilateral(img, [tuple(_) for _ in points.points])
         if crop:
-            output_filename = f"{output_dir}/crop{i}_class_{class_idx}.jpg"
+            output_filename = f"{output_dir}/{str(Path(im_path).name)}_crop{i}_class_{class_idx}.jpg"
             # Save the cropped image
             crop.save(output_filename)
             output_imgs.append(output_filename)
