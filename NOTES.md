@@ -78,7 +78,7 @@ yolo-train-img -c \
 "
 yolo obb val \
 data=xView-patches-ship-sam.yaml \
-model=/best.pt \
+model=runs/obb/test-run/weights/best.pt \
 device=0 \
 imgsz=640 \
 batch=16 \
@@ -91,18 +91,10 @@ plots=True
 #### First extract patches from xView
 
 ```python
-import os
-from ultralytics.utils.sam_extractor import DatasetOBBExtractor, format_patches_for_image_classification
-from pathlib import Path
-final_dir = Path("/work3/dimda/ultralytics_dotav2/examples/datasets/xView-patches-ship-sam")
-output_dir = str(final_dir) + "-crops"
-dat = DatasetOBBExtractor(model=None, yaml_cfg="/work3/dimda/ultralytics_dotav2/ultralytics/cfg/datasets/xView-patches-ship-sam.yaml", dataset_dir=final_dir, output_dir=None, default_class=None, debug=False)
-dat.get_dataset_info()
-patches = dat.extract_patches(idxs=None, output_dir=output_dir)
-format_patches_for_image_classification(
-    base_dir=output_dir,
-    output_dir=output_dir,
-    move=False)
+python3 ultralytics/utils/extract_patches.py \
+    --input-dir datasets/xView-ships-obb \
+    --yaml-cfg ultralytircs/cfg/datasets/xView-ships-obb.yaml \
+    --move
 ```
 
 or
@@ -112,29 +104,18 @@ docker run -it --rm --gpus all --shm-size=5G \
 -v ~/runs:/home/userCoE/workdev/runs \
 -v ~/data:/home/userCoE/workdev/datasets \
 --entrypoint python3 \
-yolo-train-img -c \
-"
-import os
-from ultralytics.utils.sam_extractor import DatasetOBBExtractor, format_patches_for_image_classification
-from pathlib import Path
-final_dir = Path('/work3/dimda/ultralytics_dotav2/examples/datasets/xView-patches-ship-sam')
-output_dir = str(final_dir) + '-crops'
-dat = DatasetOBBExtractor(model=None, yaml_cfg='/work3/dimda/ultralytics_dotav2/ultralytics/cfg/datasets/xView-patches-ship-sam.yaml', dataset_dir=final_dir, output_dir=None, default_class=None, debug=False)
-dat.get_dataset_info()
-patches = dat.extract_patches(idxs=None, output_dir=output_dir)
-format_patches_for_image_classification(
-    base_dir=output_dir,
-    output_dir=output_dir,
-    move=False)
-"
+yolo-train-img ultralytics/utils/extract_patches.py \
+--input-dir datasets/xView-ships-obb \
+--yaml-cfg ultralytircs/cfg/datasets/xView-ships-obb.yaml \
+--move
 ```
 
 #### Train classifier
 
 ```python
-python3 examples/train_classifier.py \
-    --data-dir=/work3/dimda/ultralytics_dotav2/examples/datasets/xView-patches-ship-sam-crops \
-    --project-name=test \
+python3 jobs/train_classifier.py \
+    --data-dir=datasets/HRSC2016-crops \
+    --project-name=HRSC2016-crops \
     --wandb-mode=offline
 ```
 
@@ -145,13 +126,11 @@ mkdir ~/runs ~/data
 docker run -it --rm --gpus all --shm-size=5G \
 -v ~/runs:/home/userCoE/workdev/runs \
 -v ~/data:/home/userCoE/workdev/datasets \
-yolo-train-img -c \
-"
-python3 examples/train_classifier.py \
-    --data-dir=/home/userCoE/workdev/datasets/xView-patches-ship-sam-crops \
+--entrypoint python3
+yolo-train-img jobs/train_classifier.py \
+    --data-dir=datasets/xView-patches-ship-sam-crops \
     --project-name=test \
     --wandb-mode=offline
-"
 ```
 
 ### Releasing a dataset
@@ -163,7 +142,7 @@ Follow the recipe below from
 
 ```bash
 export DS_NAME=HRSC2016
-export GITREPO=/work3/dimda/ultralytics_dotav2 DATASET_DIR=/work3/dimda/ultralytics_dotav2/examples/datasets/hsrc-ds/HRSC2016 OUTPUTFILE=$DS_NAME.zip TMPDIR=/tmp/splits
+export GITREPO=/work3/dimda/ultralytics_dotav2 DATASET_DIR=/work3/dimda/ultralytics_dotav2/datasets/hsrc-ds/HRSC2016 OUTPUTFILE=$DS_NAME.zip TMPDIR=/tmp/splits
 cd $DATASET_DIR && zip -r /tmp/$OUTPUTFILE ./ && \
 rm -rf $TMPDIR && mkdir -p $TMPDIR
 split -d -b 1G /tmp/$OUTPUTFILE $TMPDIR/$OUTPUTFILE. && \

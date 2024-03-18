@@ -4,8 +4,8 @@ RUN apt-get update && \
     apt-get install -y unzip pv libgl1-mesa-glx sudo
 
 # Set build-time variables
-ENV USER_ID 1000
-ENV GROUP_ID 1000
+ARG USER_ID
+ARG GROUP_ID
 ENV containerusername userCoE
 ENV workdev /home/${containerusername}/workdev
 # Create a new user with the user ID and group ID passed as build arguments

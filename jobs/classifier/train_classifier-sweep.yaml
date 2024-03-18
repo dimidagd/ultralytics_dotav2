@@ -1,0 +1,39 @@
+method: bayes
+program: jobs/train_classifier.py
+parameters:
+  bbone-checkpoint:
+    values: ["google/vit-base-patch32-224-in21k"]
+  grad-accum-steps:
+    values: [1, 2, 4, 8, 16]
+  learning-rate:
+    min: 0.00001
+    max: 0.1
+  rotation-degrees:
+    values: [0, 45, 90, 135, 180]
+  scale-min:
+    values: [0.0, 0.1, 0.2, 0.3, 0.4, 0.5]
+  scale-max:
+    values: [0.6, 0.7, 0.8, 0.9]
+  flip:
+    values: [0.0, 0.2, 0.4, 0.6, 0.8, 1.0]
+  shear:
+    min: 1
+    max: 30
+  translate:
+    values: [0.0, 0.1, 0.2, 0.3]
+  brightness:
+    values: [0.0, 0.1, 0.2, 0.3]
+  contrast:
+    values: [0.0, 0.1, 0.2, 0.3]
+metric:
+  name: eval/accuracy
+  goal: maximize
+
+command:
+  - ${env}
+  - python
+  - ${program}
+  - --data-dir=datasets/HRSC2016-crops
+  - --project-name=SWEEPTEST
+  - --wandb-mode=online
+  - ${args}

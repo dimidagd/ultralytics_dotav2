@@ -117,7 +117,7 @@ if __name__ == "__main__":
     assert os.path.exists(sys_data_path), f"sysdata.xml not found at {sys_data_path}"
     logger.info("Reading sysdata.xml to get class mapping.")
     mapping= get_class_ids2str(sys_data_path)
-    class2id = {"ship": 0, "aircraft_carrier":1, "warcraft":2, "merchant ship":3, "aircraft carrier":4, "submarine":5}
+    class2id = {"ship": 0, "aircraft carrier":1, "warcraft":2, "merchant ship":3, "submarine":4}
     output_dir = Path(args.output_dir)
     output_dir.mkdir(parents=True, exist_ok=True)
 
