@@ -528,12 +528,12 @@ class Exporter:
                 f"or in {ROOT}. See PNNX repo for full installation instructions."
             )
             system = "macos" if MACOS else "windows" if WINDOWS else "linux-aarch64" if ARM64 else "linux"
-            try:
-                _, assets = get_github_assets(repo="pnnx/pnnx", retry=True)
+            _, assets = get_github_assets(repo="pnnx/pnnx", retry=True)
+            if assets:
                 url = [x for x in assets if f"{system}.zip" in x][0]
-            except Exception as e:
+            else:
                 url = f"https://github.com/pnnx/pnnx/releases/download/20240226/pnnx-20240226-{system}.zip"
-                LOGGER.warning(f"{prefix} WARNING ⚠️ PNNX GitHub assets not found: {e}, using default {url}")
+                LOGGER.warning(f"{prefix} WARNING ⚠️ PNNX GitHub assets not found, using default {url}")
             asset = attempt_download_asset(url, repo="pnnx/pnnx", release="latest")
             if check_is_path_safe(Path.cwd(), asset):  # avoid path traversal security vulnerability
                 unzip_dir = Path(asset).with_suffix("")
@@ -886,6 +886,9 @@ class Exporter:
     def export_tfjs(self, prefix=colorstr("TensorFlow.js:")):
         """YOLOv8 TensorFlow.js export."""
         check_requirements("tensorflowjs")
+        if ARM64:
+            # Fix error: `np.object` was a deprecated alias for the builtin `object` when exporting to TF.js on ARM64
+            check_requirements("numpy==1.23.5")
         import tensorflow as tf
         import tensorflowjs as tfjs  # noqa
 
