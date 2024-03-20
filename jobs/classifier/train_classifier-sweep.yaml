@@ -1,5 +1,6 @@
+name: ship_classifier_sweep
 method: bayes
-program: jobs/train_classifier.py
+program: jobs/classifier/train_classifier.py
 parameters:
   bbone-checkpoint:
     values: ["google/vit-base-patch32-224-in21k"]
@@ -26,7 +27,7 @@ parameters:
   contrast:
     values: [0.0, 0.1, 0.2, 0.3]
 metric:
-  name: eval/accuracy
+  name: eval/f1
   goal: maximize
 
 command:
@@ -34,6 +35,6 @@ command:
   - python
   - ${program}
   - --data-dir=datasets/HRSC2016-crops
-  - --project-name=SWEEPTEST
+  - --project-name=HRSC2016-crops
   - --wandb-mode=online
   - ${args}
