@@ -1,18 +1,24 @@
 FROM python:3.10
 
 RUN apt-get update && \
-    apt-get install -y unzip pv libgl1-mesa-glx sudo
+    apt-get install -y unzip pv libgl1-mesa-glx
 
-# Set build-time variables
-ARG USER_ID
-ARG GROUP_ID
-ENV containerusername userCoE
-ENV workdev /home/${containerusername}/workdev
-# Create a new user with the user ID and group ID passed as build arguments
-RUN groupadd -g $GROUP_ID CoEgroup && useradd -m -u $USER_ID -g CoEgroup ${containerusername}
-RUN echo "${containerusername} ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers
-USER ${containerusername}
-ENV PATH="/home/${containerusername}/.local/bin:${PATH}"
+ARG USERNAME=user
+ARG USER_UID=1000
+ARG USER_GID=$USER_UID
+ENV workdev /home/${USERNAME}/workdev
+# Create the user
+RUN groupadd --gid $USER_GID $USERNAME \
+    && useradd --uid $USER_UID --gid $USER_GID -m $USERNAME \
+    #
+    # [Optional] Add sudo support. Omit if you don't need to install software after connecting.
+    && apt-get update \
+    && apt-get install -y sudo \
+    && echo $USERNAME ALL=\(root\) NOPASSWD:ALL > /etc/sudoers.d/$USERNAME \
+    && chmod 0440 /etc/sudoers.d/$USERNAME
+
+USER ${USERNAME}
+ENV PATH="/home/${USERNAME}/.local/bin:${PATH}"
 RUN pip install --user --trusted-host pypi.org \
 datasets \
 scikit-learn \
@@ -24,10 +30,8 @@ wandb \
 torchvision
 
 COPY . $workdev
-RUN sudo chown -R ${containerusername}:CoEgroup $workdev
+RUN sudo chown -R ${USER_UID}:${USER_GID} $workdev
 RUN pip install --user --trusted-host pypi.org -e $workdev
-
 WORKDIR $workdev
-RUN yolo settings && sed -i 's|datasets_dir: /home/'"${containerusername}"'/datasets|datasets_dir: '"${workdev}"'/datasets|' /home/${containerusername}/.config/Ultralytics/settings.yaml
-
+RUN yolo settings && sed -i 's|datasets_dir: /home/'"${USERNAME}"'/datasets|datasets_dir: '"${workdev}"'/datasets|' /home/${USERNAME}/.config/Ultralytics/settings.yaml
 ENTRYPOINT [ "bash" ]
