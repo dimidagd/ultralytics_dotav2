@@ -15,11 +15,12 @@ import argparse
 from torchvision.transforms import RandomResizedCrop, ToTensor
 import torchvision.transforms as transforms
 from transformers import EarlyStoppingCallback # https://stackoverflow.com/a/69087153
-
-accuracy = evaluate.load("accuracy")
-precision = evaluate.load("precision")
-recall = evaluate.load("recall")
-f1 = evaluate.load("f1")
+METRICS_PATH = "./evaluate/metrics"
+metric_path_find = lambda x: METRICS_PATH + f"/{x}/{x}.py"
+accuracy = evaluate.load(metric_path_find("accuracy"))
+precision = evaluate.load(metric_path_find("precision"))
+recall = evaluate.load(metric_path_find("recall"))
+f1 = evaluate.load(metric_path_find("f1"))
 
 def compute_metrics(eval_pred):
     predictions, labels = eval_pred
@@ -71,7 +72,6 @@ BATCHSZ_PER_MODEL = {
     "google/vit-base-patch32-224-in21k":345}
 
 if __name__ == "__main__":
-
     # Create an argument parser
     parser = argparse.ArgumentParser(description='Train classifier')
 
@@ -123,13 +123,12 @@ if __name__ == "__main__":
 
     checkpoint = BBONE_CHECKPOINT
     if not batch_size_args:
-        batch_size = BATCHSZ_PER_MODEL[checkpoint]
+        batch_size = BATCHSZ_PER_MODEL.get(checkpoint,1)
     else:
         batch_size = batch_size_args
 
     os.environ["WANDB_MODE"] = os.environ.get("WANDB_MODE", WANDB_MODE)
     os.environ["WANDB_LOG_MODEL"] = "end" # end |checkpoint|false. "end" should be used with load_best_model_at_end=True in TrainingArgs
-
 
     logger = create_logger()
     # Get the current date and time
@@ -178,7 +177,6 @@ if __name__ == "__main__":
     # Load the image processor backbone
     logger.info(f"Loading image processor backbone {checkpoint}")
     image_processor = AutoImageProcessor.from_pretrained(checkpoint)
-
     # Define Transforms based on bbone specifications
     normalize = Normalize(mean=image_processor.image_mean, std=image_processor.image_std)
     size = (

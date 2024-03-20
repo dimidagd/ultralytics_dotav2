@@ -1,3 +1,6 @@
+makefile
+.dockerignore
+.gitignore
 Dockerfile
 **/wandb
 **/runs

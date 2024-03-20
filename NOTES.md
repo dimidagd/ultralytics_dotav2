@@ -1,7 +1,7 @@
 ### Build the image
 
 ```bash
-docker build --build-arg USER_ID=$(id -u) --build-arg GROUP_ID=$(id -g) -t yolo-train-img .
+docker build --build-arg USER_UID=$(id -u) --build-arg USER_GID=$(id -g) -t yolo-train-img .
 ```
 
 ### Training an obb model
@@ -106,14 +106,14 @@ docker run -it --rm --gpus all --shm-size=5G \
 --entrypoint python3 \
 yolo-train-img ultralytics/utils/extract_patches.py \
 --input-dir datasets/xView-ships-obb \
---yaml-cfg ultralytircs/cfg/datasets/xView-ships-obb.yaml \
+--yaml-cfg ultralytics/cfg/datasets/xView-ships-obb.yaml \
 --move
 ```
 
 #### Train classifier
 
 ```python
-python3 jobs/train_classifier.py \
+python3 jobs/classifier/train_classifier.py \
     --data-dir=datasets/HRSC2016-crops \
     --project-name=HRSC2016-crops \
     --wandb-mode=offline
@@ -127,7 +127,7 @@ docker run -it --rm --gpus all --shm-size=5G \
 -v ~/runs:/home/userCoE/workdev/runs \
 -v ~/data:/home/userCoE/workdev/datasets \
 --entrypoint python3
-yolo-train-img jobs/train_classifier.py \
+yolo-train-img jobs/classifier/train_classifier.py \
     --data-dir=datasets/xView-patches-ship-sam-crops \
     --project-name=test \
     --wandb-mode=offline
@@ -150,4 +150,10 @@ cd $TMPDIR && \
 md5sum ./* > md5list && \
 cd $GITREPO && \
 gh release create $DS_NAME $TMPDIR/* --title "$OUTPUTFILE dataset" --notes "This release includes files with sub 1gb parts and relates to the $DS_NAME dataset."
+```
+
+### HF offline download
+
+```bash
+huggingface-cli download google/vit-base-patch32-224-in21k --local-dir /home/user/workdev/datasets/google-vit --local-dir-use-symlinks=False --force-download
 ```
