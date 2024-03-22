@@ -39,8 +39,8 @@ yolo obb train \
 # Create the directories first otherwise the container user won't be able to write into them as they will be owned by root.
 mkdir ~/runs ~/data
 docker run -it --rm --gpus all --shm-size=5G \
--v ~/runs:/home/userCoE/workdev/runs \
--v ~/data:/home/userCoE/workdev/datasets \
+-v ~/runs:/home/user/workdev/runs \
+-v ~/data:/home/user/workdev/datasets \
 yolo-train-img -c \
 "
 yolo obb train \
@@ -72,8 +72,8 @@ or
 # Create the directories first otherwise the container user won't be able to write into them as they will be owned by root.
 mkdir ~/runs ~/data
 docker run -it --rm --gpus all --shm-size=5G \
--v ~/runs:/home/userCoE/workdev/runs \
--v ~/data:/home/userCoE/workdev/datasets \
+-v ~/runs:/home/user/workdev/runs \
+-v ~/data:/home/user/workdev/datasets \
 yolo-train-img -c \
 "
 yolo obb val \
@@ -101,8 +101,8 @@ or
 
 ```bash
 docker run -it --rm --gpus all --shm-size=5G \
--v ~/runs:/home/userCoE/workdev/runs \
--v ~/data:/home/userCoE/workdev/datasets \
+-v ~/runs:/home/user/workdev/runs \
+-v ~/data:/home/user/workdev/datasets \
 --entrypoint python3 \
 yolo-train-img ultralytics/utils/extract_patches.py \
 --input-dir datasets/xView-ships-obb \
@@ -124,8 +124,8 @@ or
 ```bash
 mkdir ~/runs ~/data
 docker run -it --rm --gpus all --shm-size=5G \
--v ~/runs:/home/userCoE/workdev/runs \
--v ~/data:/home/userCoE/workdev/datasets \
+-v ~/runs:/home/user/workdev/runs \
+-v ~/data:/home/user/workdev/datasets \
 --entrypoint python3
 yolo-train-img jobs/classifier/train_classifier.py \
     --data-dir=datasets/xView-patches-ship-sam-crops \
