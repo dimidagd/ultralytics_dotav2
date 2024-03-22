@@ -25,7 +25,7 @@
 		}
 	},
     "mounts": [
-        "source=${localWorkspaceFolder},target=/home/userCoE/workdev,type=bind,consistency=cached"
+        "source=${localWorkspaceFolder},target=/home/user/workdev,type=bind,consistency=cached"
         // "source=/work3,target=/work3,type=bind,consistency=cached"
     ],
     "remoteUser": "user",
