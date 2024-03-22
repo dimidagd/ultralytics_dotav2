@@ -141,13 +141,18 @@ yolo-train-img jobs/classifier/train_classifier.py \
 Follow the recipe below from
 
 ```bash
-export DS_NAME=HRSC2016
-export GITREPO=/work3/dimda/ultralytics_dotav2 DATASET_DIR=/work3/dimda/ultralytics_dotav2/datasets/hsrc-ds/HRSC2016 OUTPUTFILE=$DS_NAME.zip TMPDIR=/tmp/splits
-cd $DATASET_DIR && zip -r /tmp/$OUTPUTFILE ./ && \
+export DS_NAME=DOTAv2.0-test
+export GITREPO=/work3/dimda/ultralytics_dotav2 DATASET_DIR=/work3/dimda/ultralytics_dotav2/datasets/DOTA-v2.0 OUTPUTFILE=$DS_NAME.tar TMPDIR=/work1/dimda/splits
+rm -f /tmp/$OUTPUTFILE && cd $DATASET_DIR && tar cvf /tmp/$OUTPUTFILE ./ && \
 rm -rf $TMPDIR && mkdir -p $TMPDIR
-split -d -b 1G /tmp/$OUTPUTFILE $TMPDIR/$OUTPUTFILE. && \
+split -d -b 1G /tmp/$OUTPUTFILE $TMPDIR/$OUTPUTFILE.
+cd $TMPDIR
+for file in $OUTPUTFILE.??; do
+tar -zcvf "${file}.tgz" "$file" && rm -f "$file" &
+done
+wait
 cd $TMPDIR && \
-md5sum ./* > md5list && \
+md5sum ./*.tgz > md5list && \
 cd $GITREPO && \
 gh release create $DS_NAME $TMPDIR/* --title "$OUTPUTFILE dataset" --notes "This release includes files with sub 1gb parts and relates to the $DS_NAME dataset."
 ```
