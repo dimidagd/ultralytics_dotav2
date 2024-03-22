@@ -65,6 +65,25 @@ def file_sha1(file: str) -> str:
             sha1.update(chunk)
     return sha1.hexdigest()
 
+
+def file_md5(file: str) -> str:
+    """
+    Calculate the SHA1 hash of a file.
+
+    Args:
+        file (str): Path to the file to calculate the SHA1 hash of.
+
+    Returns:
+        (str): The SHA1 hash of the file.
+    """
+    import hashlib
+
+    md5 = hashlib.md5()
+    with open(file, "rb") as f:
+        while (chunk := f.read(8192)):
+            md5.update(chunk)
+    return md5.hexdigest()
+
 def parse_requirements(file_path=ROOT.parent / "requirements.txt", package=""):
     """
     Parse a requirements.txt file, ignoring lines that start with '#' and any text after '#'.
