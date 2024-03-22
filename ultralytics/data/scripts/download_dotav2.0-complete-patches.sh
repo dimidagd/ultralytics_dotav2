@@ -33,9 +33,8 @@ if [ -z "$input_dir" ]; then
 fi
 output_dir=$ULTRALYTICS_DS_DIR/$dataset_name
 rm -rf $output_dir && mkdir -p $output_dir
-
-bash $GIT_ROOT/ultralytics/data/scripts/download_dotav2.0-complete.sh $url $input_dir $parent_dataset_name  # XXX: ultralytics will have to be stripped for package distribution
-
+echo "Running ultralytics/data/scripts/download_dataset.sh"
+bash $GIT_ROOT/ultralytics/data/scripts/download_dataset.sh $url $input_dir $parent_dataset_name  # XXX: ultralytics will have to be stripped for package distribution
 
 python3 - <<EOF
 from ultralytics.data.split_dota import split_trainval, split_test

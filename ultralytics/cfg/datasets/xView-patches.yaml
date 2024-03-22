@@ -12,7 +12,7 @@
 path: ../datasets/xView-patches # dataset root dir
 train: images/train # train images (relative to 'path') 90% of 847 train images
 val: images/val # train images (relative to 'path') 10% of 847 train images
-url: https://github.com/dimidagd/ultralytics_dotav2/releases/download/xView/
+url: https://github.com/dimidagd/ultralytics_dotav2/releases/download/xView-test/
 # Classes
 names:
   0: Fixed-wing Aircraft
@@ -131,8 +131,7 @@ download: |
 
     import subprocess
     # Execute download_xView.sh script with arguments url, save dir, name of dataset
-    subprocess.run(['bash', './ultralytics/data/scripts/download_xView.sh', yaml['url'], dir, 'xView'])
-
+    subprocess.run(['bash', './ultralytics/data/scripts/download_dataset.sh', yaml['url'], dir, 'xView'])
     print("Downloaded/unarchived xView data")
     # Convert labels
     print("Converting labels")

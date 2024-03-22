@@ -41,7 +41,7 @@ if [ -d $url ]; then
     url=file://$url
     echo "URL is a file, reading from file $url"
 else
-    echo "URL is not a file, using as is"
+    echo "URL is not a file, using as is $url"
 fi
 md5file=$DATA_DIR/$ZIPFILEBASENAME.md5list
 md5link="${url}md5list"

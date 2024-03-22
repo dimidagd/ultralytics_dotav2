@@ -26,7 +26,7 @@ input_dir=$d/$parent_dataset_name
 output_dir=$ULTRALYTICS_DS_DIR/$dataset_name
 rm -rf $output_dir && mkdir -p $output_dir
 
-bash $GIT_ROOT/ultralytics/data/scripts/download_dotav2.0-complete.sh $url $input_dir $parent_dataset_name  # XXX: ultralytics will have to be stripped for package distribution
+bash $GIT_ROOT/ultralytics/data/scripts/download_dataset.sh $url $input_dir $parent_dataset_name  # XXX: ultralytics will have to be stripped for package distribution
 
 
 python3 - <<EOF

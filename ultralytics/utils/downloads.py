@@ -5,7 +5,7 @@ import re
 import shutil
 import subprocess
 from itertools import repeat
-from multiprocessing.pool import ThreadPool
+from multiprocessing.pool import Pool
 from pathlib import Path
 from urllib import parse, request
 
@@ -282,7 +282,7 @@ def safe_download(
     min_bytes=1e0,
     exist_ok=False,
     progress=True,
-    sha1sum=None,
+    md5sum=None,
 ):
     """
     Downloads files from a URL, with options for retrying, unzipping, and deleting the downloaded file.
@@ -328,8 +328,8 @@ def safe_download(
                     s = "sS" * (not progress)  # silent
                     r = subprocess.run(["curl", "-#", f"-{s}L", url, "-o", f, "--retry", "3", "-C", "-"]).returncode
                     assert r == 0, f"Curl return value {r}"
-                    if sha1sum and sha1sum != checks.file_sha1(f):
-                        raise ValueError(f"SHA-1 mismatch for {f}, retrying...")
+                    if md5sum and md5sum != checks.file_md5(f):
+                        raise ValueError(f"md5 {md5sum} mismatch for {f}: {checks.file_md5(f)}, retrying...")
                 else:  # urllib download
                     method = "torch"
                     if method == "torch":
@@ -361,9 +361,9 @@ def safe_download(
 
     if unzip and f.exists() and f.suffix in ("", ".zip", ".tar", ".gz", ".tgz"):
         from zipfile import is_zipfile
-        # Safety feature, check for sha1sum if provided
-        if sha1sum and sha1sum != checks.file_sha1(f):
-            raise ValueError(f"SHA-1 mismatch for {f}, skipping extraction...")
+        # Safety feature, check for md5sum if provided
+        if md5sum and md5sum != checks.file_md5(f):
+            raise ValueError(f"md5 {md5sum} mismatch for {f}: {checks.file_md5(f)}, retrying...")
         unzip_dir = (dir or f.parent).resolve()  # unzip to dir if provided else unzip in place
         if is_zipfile(f):
             unzip_dir = unzip_file(file=f, path=unzip_dir, exist_ok=exist_ok, progress=progress)  # unzip
@@ -410,6 +410,11 @@ def get_github_assets(repo="ultralytics/assets", version="latest", retry=False):
     data = r.json()
     return data["tag_name"], [x["name"] for x in data["assets"]]  # tag, assets i.e. ['yolov8n.pt', 'yolov8s.pt', ...]
 
+def read_md5list(file_path):
+    with open(file_path) as file:
+        # Using list comprehension to split each line and extract MD5 hash and file path
+        md5_hashes, file_paths = zip(*(line.strip().split() for line in file if line.strip()))
+    return list(md5_hashes), list(file_paths)
 
 def attempt_download_asset(file, repo="ultralytics/assets", release="v8.1.0", **kwargs):
     """
@@ -464,8 +469,10 @@ def attempt_download_asset(file, repo="ultralytics/assets", release="v8.1.0", **
 
         return str(file)
 
-
-def download(url, dir=Path.cwd(), unzip=True, delete=False, curl=False, threads=1, retry=3, exist_ok=False):
+def safe_download_wrapper(args,
+    **kwargs):
+    safe_download(url=args[0],dir=args[1], md5sum=args[2], **kwargs)
+def download(url, dir=Path.cwd(), unzip=True, delete=False, curl=False, threads=1, retry=3, exist_ok=False, md5_hashes=None):
     """
     Downloads files from specified URLs to a given directory. Supports concurrent downloads if multiple threads are
     specified.
@@ -486,13 +493,16 @@ def download(url, dir=Path.cwd(), unzip=True, delete=False, curl=False, threads=
         ```
     """
     dir = Path(dir)
+    from functools import partial
+    if isinstance(url, list):
+        if md5_hashes is None:
+            md5_hashes = repeat(None)
+
     dir.mkdir(parents=True, exist_ok=True)  # make directory
     if threads > 1:
-        with ThreadPool(threads) as pool:
+        with Pool(threads) as pool:
             pool.map(
-                lambda x: safe_download(
-                    url=x[0],
-                    dir=x[1],
+                partial(safe_download_wrapper,
                     unzip=unzip,
                     delete=delete,
                     curl=curl,
@@ -500,7 +510,7 @@ def download(url, dir=Path.cwd(), unzip=True, delete=False, curl=False, threads=
                     exist_ok=exist_ok,
                     progress=threads <= 1,
                 ),
-                zip(url, repeat(dir)),
+                zip(url, repeat(dir), md5_hashes),
             )
             pool.close()
             pool.join()
