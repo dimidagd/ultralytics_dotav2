@@ -1,7 +1,7 @@
 FROM python:3.10
 
 RUN apt-get update && \
-    apt-get install -y unzip pv libgl1-mesa-glx
+    apt-get install -y unzip pv libgl1-mesa-glx pigz
 
 ARG USERNAME=user
 ARG USER_UID=1000
