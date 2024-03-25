@@ -17,6 +17,9 @@ RUN groupadd --gid $USER_GID $USERNAME \
     && echo $USERNAME ALL=\(root\) NOPASSWD:ALL > /etc/sudoers.d/$USERNAME \
     && chmod 0440 /etc/sudoers.d/$USERNAME
 
+COPY ./container_setup/ps1.sh /home/${USERNAME}/ps1.sh
+RUN echo "source /home/${USERNAME}/ps1.sh" >> /home/${USERNAME}/.bashrc
+
 USER ${USERNAME}
 ENV PATH="/home/${USERNAME}/.local/bin:${PATH}"
 RUN pip install --user --trusted-host pypi.org \
@@ -27,11 +30,13 @@ pillow \
 evaluate \
 transformers[torch] \
 wandb \
-torchvision
+torchvision \
+tensorboard
 
 COPY . $workdev
 RUN sudo chown -R ${USER_UID}:${USER_GID} $workdev
 RUN pip install --user --trusted-host pypi.org -e $workdev
 WORKDIR $workdev
 RUN yolo settings && sed -i 's|datasets_dir: /home/'"${USERNAME}"'/datasets|datasets_dir: '"${workdev}"'/datasets|' /home/${USERNAME}/.config/Ultralytics/settings.yaml
+
 ENTRYPOINT [ "bash" ]
