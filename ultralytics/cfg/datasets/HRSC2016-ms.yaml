@@ -1,0 +1,131 @@
+# Ultralytics YOLO 🚀, AGPL-3.0 license
+# DOTA 1.5 dataset https://captain-whu.github.io/DOTA/index.html for object detection in aerial images by Wuhan University
+# Documentation: https://docs.ultralytics.com/datasets/obb/dota-v2/
+# Example usage: yolo train model=yolov8n-obb.pt data=DOTAv1.5.yaml
+# parent
+# ├── ultralytics
+# └── datasets
+#     └── dota1.5  ← downloads here (2GB)
+# https://datasetninja.com/hrsc2016-ms
+# Train/val/test sets as 1) dir: path/to/imgs, 2) file: path/to/imgs.txt, or 3) list: [path/to/imgs1, path/to/imgs2, ..]
+path: ../datasets/HRSC2016-ms-patches # dataset root dir
+train: images/train # train images (relative to 'path') 1411 images
+val: images/val # val images (relative to 'path') 458 images
+#test: images/test # test images (optional) 937 images
+url: https://github.com/dimidagd/ultralytics_dotav2/releases/download/HRSC2016-ms/ # Do not forget trailing /
+# Classes for DOTA 1.5
+names:
+  0: ship
+# Download script/URL (optional)
+download: |
+  import json
+  import os
+  from pathlib import Path
+
+  import numpy as np
+  from PIL import Image
+  from tqdm import tqdm
+
+  from ultralytics.data.utils import autosplit, process_xview_feature
+  from ultralytics.utils.ops import xyxy2xywhn
+  from ultralytics.data.split_xview import transform_yolo_dota_to_obb
+  from ultralytics.data.split_dota import split_trainval, split_test
+  from ultralytics.utils.downloads import safe_download
+  from PIL import Image
+  import shutil
+  Image.MAX_IMAGE_PIXELS = None # There is a security issue related to this.
+  final_dir = Path(yaml['path'])
+  tmp_dir = '/tmp' / final_dir
+  dataset_name = 'hrf2016'
+  dir =  '/tmp' / Path(dataset_name)
+
+
+  import subprocess
+  # Execute download_xView.sh script with arguments url, save dir, name of dataset
+  subprocess.run(['bash', './ultralytics/data/scripts/download_xView.sh', yaml['url'], dir, dataset_name])
+
+  print("Moving images")
+  # Move images
+  images = Path(dir / 'images')
+  #images.mkdir(parents=True, exist_ok=True)
+  # Remove existing directories with shutil and rename existing directories
+  import shutil
+  # Remove existing train folder even if it does not exist
+  print("Removing existing train, val, test folders")
+  # os.system('rm -rf ' + str(dir / 'images' / 'train'))
+  # os.system('rm -rf ' + str(dir / 'images' / 'val'))
+  # os.system('rm -rf ' + str(dir / 'images' / 'test'))
+
+  # # Split train data into train,val splits since in xView val data have no labels
+  # print("Split train data into train,val splits")
+  # autosplit(dir / 'images' / 'train')
+
+  # Move images and labels to train, val folders.
+  # for split in ['train', 'val']:
+  #   with open(dir / 'images' / f'autosplit_{split}.txt') as f:
+  #       for line in f:
+  #           fp = Path(line.strip())
+  #           image_path = dir / 'images' / fp
+  #           final_image_path = dir / 'images' / split / fp.name
+  #           final_label_path = dir / 'labels' / split / fp.with_suffix('.txt').name
+  #           label = Path(dir / 'labels' / fp.with_suffix('.txt'))
+  #           if image_path.exists():
+  #             Path(image_path).rename(final_image_path)
+  #           if label.exists():
+  #             label.rename(final_label_path)
+
+
+  print("Finished moving images")
+
+  print("Converting to OBB by modifying labels")
+
+  anns = transform_yolo_dota_to_obb(yolo_dota_path=dir, output_dir=dir, splits=['val','train'])
+  print("Finished converting to OBB, now you can split into patches")
+
+  print("Will now split into patches")
+
+  # split train and val set, with labels.
+
+  print(f"Removing {tmp_dir}")
+  shutil.rmtree(tmp_dir, ignore_errors=True)
+  tmp_dir.mkdir(parents=True, exist_ok=True)
+  print(f"Creating patched dataset in {tmp_dir}")
+  split_trainval(
+      data_root=dir,
+      save_dir=tmp_dir,
+      rates=[1.0],    # multi-scaleP
+      gap=-100
+  )
+
+  # Split also test set, without labels.
+  split_test(
+      data_root=dir,
+      save_dir=tmp_dir,
+      rates=[1.0],    # multi-scale
+      gap=-100
+  )
+  print("Will now generate OBB boxes using SAM")
+  from ultralytics import SAM
+  from ultralytics.utils.sam_extractor import DatasetOBBExtractor
+  model = SAM('sam_b.pt')
+  model.info()
+  debug = False
+  dataset_dir = tmp_dir
+  sam_ext = 'sam-annos' # Must not include labels
+  output_dir = tmp_dir / sam_ext
+  dat = DatasetOBBExtractor(model=model,
+  dataset_dir=str(dataset_dir),
+  output_dir=str(output_dir),
+  default_class="ship", # keep_only_classes=[0],
+  yaml_cfg=yaml,
+  debug=debug)
+  dat.get_dataset_info(splits=['train', 'val'])
+  list(dat.process(idxs=None))
+  import subprocess
+  subprocess.run(['mv', str(tmp_dir / 'labels'), str(tmp_dir / 'labels-original')])
+  subprocess.run(['mv', str(output_dir / 'labels'), str(tmp_dir / 'labels')])
+  subprocess.run(['rmdir', str(output_dir)])
+  print(f"Moving {tmp_dir} to {final_dir}")
+  subprocess.run(['mv', '-f', tmp_dir, final_dir])
+  # Clean-up OG xView
+  #subprocess.run(['rm', '-f', tmp_dir, dir])

@@ -1,0 +1,118 @@
+# Ultralytics YOLO 🚀, AGPL-3.0 license
+# DOTA 1.5 dataset https://captain-whu.github.io/DOTA/index.html for object detection in aerial images by Wuhan University
+# Documentation: https://docs.ultralytics.com/datasets/obb/dota-v2/
+# Example usage: yolo train model=yolov8n-obb.pt data=DOTAv1.5.yaml
+# parent
+# ├── ultralytics
+# └── datasets
+#     └── dota1.5  ← downloads here (2GB)
+# https://datasetninja.com/hrsc2016-ms
+# Train/val/test sets as 1) dir: path/to/imgs, 2) file: path/to/imgs.txt, or 3) list: [path/to/imgs1, path/to/imgs2, ..]
+path: ../datasets/HRSC2016 # dataset root dir
+train: images/train # train images (relative to 'path') 1411 images
+val: images/val # val images (relative to 'path') 458 images
+#test: images/test # test images (optional) 937 images
+url: https://github.com/dimidagd/ultralytics_dotav2/releases/download/HRSC2016-test/ # Do not forget trailing /
+# Classes for DOTA 1.5
+names:
+  0: ship
+  1: aircraft_carrier
+  2: warcraft
+  3: merchant ship
+  4: submarine
+# Download script/URL (optional)
+download: |
+  import json
+  import os
+  from pathlib import Path
+
+  import numpy as np
+  from PIL import Image
+  from tqdm import tqdm
+
+  from ultralytics.data.utils import autosplit, process_xview_feature
+  from ultralytics.utils.ops import xyxy2xywhn
+  from ultralytics.data.split_xview import transform_yolo_dota_to_obb
+  from ultralytics.data.split_dota import split_trainval, split_test
+  from ultralytics.utils.downloads import safe_download
+  from PIL import Image
+  import shutil
+  Image.MAX_IMAGE_PIXELS = None # There is a security issue related to this.
+  final_dir = Path(yaml['path'])
+  dataset_name = 'hrsc2016'
+  tmp_dir = '/tmp' / Path(dataset_name)
+  dir =  '/tmp' / Path('dl-'+dataset_name)
+  print(f"tmp_dir is {tmp_dir}")
+  print(f"final_dir is {final_dir}")
+  print(f"dir is {dir}")
+  import subprocess
+  # Execute download_xView.sh script with arguments url, save dir, name of dataset
+  subprocess.run(['rm', '-rf', str(dir), str(tmp_dir)])
+  subprocess.run(['bash', './ultralytics/data/scripts/download_dataset.sh', yaml['url'], dir, dataset_name])
+
+  print("Moving images")
+  # Move images
+  og_images = Path(dir / 'FullDataSet' /'AllImages')
+  im_dir = dir / 'images'
+  lb_dir = dir / 'labels'
+
+  lb_dir.mkdir(parents=True, exist_ok=True)
+  im_dir.mkdir(parents=True, exist_ok=True)
+
+  all_im_dir = im_dir / 'all'
+  all_lb_dir = dir / 'labels' / 'all'
+  subprocess.run(['mv', str(og_images), str(all_im_dir ) ])
+
+
+  # Create new yolo labels
+  subprocess.run(['python3', 'ultralytics/utils/convert_hrsc2016_to_yolo.py', '--input-dir', str(dir / 'FullDataSet' / 'Annotations'), '--output-dir',  str(all_lb_dir)])
+
+  for splits in ['train', 'val','test']:
+    for folder in ['images', 'labels']:
+      directory = Path(dir / folder / splits)
+      directory.mkdir(parents=True, exist_ok=True)
+
+  #Move images and labels to train, val folders.
+  for split in ['train', 'val', 'test']:
+    with open(dir / 'ImageSets' / f'{split}.txt') as f:
+        for line in f:
+            im_fp = Path(line.strip()).with_suffix('.bmp')
+            label_fp = Path(all_lb_dir / im_fp.with_suffix('.txt'))
+
+            image_path = all_im_dir / im_fp
+            final_image_fp = im_dir / split / im_fp.name
+            final_label_fp = lb_dir / split / im_fp.with_suffix('.txt').name
+
+            if image_path.exists():
+              Path(image_path).rename(final_image_fp)
+            if label_fp.exists():
+              label_fp.rename(final_label_fp)
+
+
+  print("Finished moving images")
+
+  print("Will now split into patches")
+  print(f"Removing {tmp_dir}")
+  shutil.rmtree(tmp_dir, ignore_errors=True)
+  tmp_dir.mkdir(parents=True, exist_ok=True)
+  print(f"Creating patched dataset in {tmp_dir}")
+  split_trainval(
+      data_root=dir,
+      save_dir=tmp_dir,
+      rates=[1.0],    # multi-scaleP
+      gap=0,
+      whole_image=True
+  )
+
+  split_test(
+      data_root=dir,
+      save_dir=tmp_dir,
+      rates=[1.0],    # multi-scaleP
+      gap=0,
+      whole_image=True
+  )
+
+  print(f"Moving {tmp_dir} to {final_dir}")
+  subprocess.run(['mv', '-f', tmp_dir, final_dir])
+  # Clean-up OG xView
+  #subprocess.run(['rm', '-f', tmp_dir, dir])
