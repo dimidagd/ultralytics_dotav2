@@ -1,0 +1,162 @@
+# Ultralytics YOLO 🚀, AGPL-3.0 license
+# DIUx xView 2018 Challenge https://challenge.xviewdataset.org by U.S. National Geospatial-Intelligence Agency (NGA)
+# --------  DOWNLOAD DATA MANUALLY and jar xf val_images.zip to 'datasets/xView' before running train command!  --------
+# Documentation: https://docs.ultralytics.com/datasets/detect/xview/
+# Example usage: yolo train data=xView.yaml
+# parent
+# ├── ultralytics
+# └── datasets
+#     └── xView  ← downloads here (20.7 GB)
+
+# Train/val/test sets as 1) dir: path/to/imgs, 2) file: path/to/imgs.txt, or 3) list: [path/to/imgs1, path/to/imgs2, ..]
+path: ../datasets/xView-patches-ships-obb # dataset root dir
+train: images/train # train images (relative to 'path') 90% of 847 train images
+val: images/val # train images (relative to 'path') 10% of 847 train images
+url: https://github.com/dimidagd/ultralytics_dotav2/releases/download/xView-test/
+# Classes
+names:
+  0: Maritime Vessel
+  1: Motorboat
+  2: Sailboat
+  3: Tugboat
+  4: Barge
+  5: Fishing Vessel
+  6: Ferry
+  7: Yacht
+  8: Container Ship
+  9: Oil Tanker
+
+# Download script/URL (optional) ---------------------------------------------------------------------------------------
+download: |
+  import json
+  import os
+  from pathlib import Path
+
+  import numpy as np
+  from PIL import Image
+  from tqdm import tqdm
+
+  from ultralytics.data.utils import autosplit, process_xview_feature
+  from ultralytics.utils.ops import xyxy2xywhn
+  from ultralytics.data.split_xview import transform_yolo_dota_to_obb
+  from ultralytics.data.split_dota import split_trainval, split_test
+  from ultralytics.utils.downloads import safe_download
+  from PIL import Image
+  import shutil
+  Image.MAX_IMAGE_PIXELS = None # There is a security issue related to this.
+  final_dir = Path(yaml['path'])
+  tmp_dir = '/tmp' / final_dir
+  dir =  '/tmp' / Path('xView')
+  if True:
+    def convert_labels(fname=Path('xView/xView_train.geojson')):
+        # Convert xView geoJSON labels to YOLO format
+        path = fname.parent
+        with open(fname) as f:
+            print(f'Loading {fname}...')
+            data = json.load(f)
+
+        # Make dirs
+        labels = Path(path / 'labels' / 'train')
+        os.system(f'rm -rf {labels}')
+        labels.mkdir(parents=True, exist_ok=True)
+
+        # xView classes 11-94 to 0-59
+        # labels mapped to -1 are ignored
+        xview_class2index = [-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 0, 1, 2, -1, 3, -1, 4, 5, 6, 7, 8, -1, 9, 10, 11,
+                            12, 13, 14, 15, -1, -1, 16, 17, 18, 19, 20, 21, 22, -1, 23, 24, 25, -1, 26, 27, -1, 28, -1,
+                            29, 30, 31, 32, 33, 34, 35, 36, 37, -1, 38, 39, 40, 41, 42, 43, 44, 45, -1, -1, -1, -1, 46,
+                            47, 48, 49, -1, 50, 51, -1, 52, -1, -1, -1, 53, 54, -1, 55, -1, -1, 56, -1, 57, -1, 58, 59]
+
+        shapes = {}
+
+        # Use ProcessPoolExecutor to parallelize the processing of the features
+        import multiprocessing
+        pool = multiprocessing.Pool()
+        args = [(feature, path, xview_class2index, shapes, xyxy2xywhn, labels) for feature in data['features']]
+        mapped_values = list(tqdm(pool.imap_unordered(process_xview_feature, args,chunksize=300), total=len(args)))
+        pool.close()
+
+    import subprocess
+    # Execute download_xView.sh script with arguments url, save dir, name of dataset
+    subprocess.run(['bash', './ultralytics/data/scripts/download_dataset.sh', yaml['url'], dir, 'xView'])
+
+    print("Downloaded/unarchived xView data")
+    # Convert labels
+    print("Converting labels")
+    convert_labels(dir / 'xView_train.geojson')
+    print("Finished converting labels")
+    print("Moving images")
+    # Move images
+    images = Path(dir / 'images')
+    images.mkdir(parents=True, exist_ok=True)
+    # Remove existing directories with shutil and rename existing directories
+    import shutil
+    # Remove existing train folder even if it does not exist
+    print("Removing existing train, val, test folders")
+    os.system('rm -rf ' + str(dir / 'images' / 'train'))
+    os.system('rm -rf ' + str(dir / 'images' / 'val'))
+    os.system('rm -rf ' + str(dir / 'images' / 'test'))
+    # Rename xView train_images to train
+    Path(dir / 'train_images').rename(dir / 'images' / 'train')
+    # Rename xView val_images to test
+    Path(dir / 'val_images').rename(dir / 'images' / 'test')
+    # Create val folder
+    Path(dir / 'images'/ 'val').mkdir(parents=True, exist_ok=True)
+    Path(dir / 'labels' / 'val').mkdir(parents=True, exist_ok=True)
+    Path(dir / 'images'/ 'train').mkdir(parents=True, exist_ok=True)
+    Path(dir / 'labels' / 'train').mkdir(parents=True, exist_ok=True)
+
+    # Split train data into train,val splits since in xView val data have no labels
+    print("Split train data into train,val splits")
+    autosplit(dir / 'images' / 'train')
+
+    # Move images and labels to train, val folders.
+    for split in ['train', 'val']:
+      with open(dir / 'images' / f'autosplit_{split}.txt') as f:
+          for line in f:
+              fp = Path(line.strip())
+              image_path = dir / 'images' / fp
+              final_image_path = dir / 'images' / split / fp.name
+              final_label_path = dir / 'labels' / split / fp.with_suffix('.txt').name
+              label = Path(dir / 'labels' / fp.with_suffix('.txt'))
+              if image_path.exists():
+                Path(image_path).rename(final_image_path)
+              if label.exists():
+                label.rename(final_label_path)
+
+
+    print("Finished moving images")
+
+    print("Converting to OBB by modifying labels")
+
+    anns = transform_yolo_dota_to_obb(yolo_dota_path=dir, output_dir=dir, splits=['val','train'])
+    print("Finished converting to OBB, now you can split into patches")
+
+    print("Will now split into patches")
+
+    # split train and val set, with labels.
+
+    print(f"Removing {tmp_dir}")
+    shutil.rmtree(tmp_dir, ignore_errors=True)
+    tmp_dir.mkdir(parents=True, exist_ok=True)
+    print(f"Creating patched dataset in {tmp_dir}")
+    split_trainval(
+        data_root=dir,
+        save_dir=tmp_dir,
+        rates=[0.5, 1.0, 1.5],    # multi-scaleP
+        gap=500,
+        mapping={i:i%23 for i in range(23,33)}
+    )
+
+    # Split also test set, without labels.
+    split_test(
+        data_root=dir,
+        save_dir=tmp_dir,
+        rates=[0.5, 1.0, 1.5],    # multi-scale
+        gap=500
+    )
+    import subprocess
+    print(f"Moving {tmp_dir} to {final_dir}")
+    subprocess.run(['mv', '-f', tmp_dir, final_dir])
+    # Clean-up OG xView
+    #subprocess.run(['rm', '-f', tmp_dir, dir])
