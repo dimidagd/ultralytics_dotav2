@@ -22,6 +22,8 @@ RUN echo "source /home/${USERNAME}/ps1.sh" >> /home/${USERNAME}/.bashrc
 
 USER ${USERNAME}
 ENV PATH="/home/${USERNAME}/.local/bin:${PATH}"
+RUN pip install --user --trusted-host pypi.org --upgrade pip
+
 RUN pip install --user --trusted-host pypi.org \
 datasets \
 scikit-learn \
