@@ -1,7 +1,9 @@
 import argparse
 from ultralytics.utils.sam_extractor import DatasetOBBExtractor, format_patches_for_image_classification
 from pathlib import Path
-import logging
+from ultralytics.utils.logger import setup_logger
+import os
+import sys
 
 if __name__ == "__main__":
     """
@@ -21,12 +23,16 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     # Set up logger
-    logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-    logger = logging.getLogger(__name__)
+    logger = setup_logger()
 
     # Rest of the code
     input_dir = Path(args.input_dir)
     output_dir = args.output_dir if args.output_dir else str(input_dir) + '-crops'
+
+    if os.path.exists(output_dir):
+        logger.warning(f"{output_dir} already exists, this call will be a no-op")
+        sys.exit(0)
+
     dat = DatasetOBBExtractor(model=None, yaml_cfg=args.yaml_cfg, dataset_dir=input_dir, output_dir=None, default_class=args.default_class, debug=args.debug)
     logger.info(f"Reading from {input_dir} and writing to {output_dir}")
     logger.info(f"Using YAML configuration file {args.yaml_cfg}")
