@@ -12,10 +12,12 @@ from tqdm import tqdm
 
 from ultralytics.data.utils import exif_size, img2label_paths
 from ultralytics.utils.checks import check_requirements
+from ultralytics.utils.logger import setup_logging
 
 check_requirements("shapely")
 from shapely.geometry import Polygon
 
+LOGGER = setup_logging()
 
 def bbox_iof(polygon1, bbox2, eps=1e-6):
     """
@@ -60,7 +62,7 @@ def process_file(im_file, lb_file):
             lb = [x.split() for x in f.read().strip().splitlines() if len(x)]
             lb = np.array(lb, dtype=np.float32)
     else:   # empty label
-        print(f"Empty label for {im_file}")
+        LOGGER.info(f"Empty label for {im_file}")
         lb = np.array([], dtype=np.float32)
     return dict(ori_size=(h, w), label=lb, filepath=im_file)
 
@@ -223,7 +225,7 @@ def apply_mapping(annos, mapping):
     for annot in annos:
         array = annot['label']
         if array.ndim < 2:
-            print("Skipping empty label.")
+            LOGGER.debug("Skipping empty label.")
             new_annos.append(None)
             continue
         mask = np.isin(array[:, 0], list(mapping.keys()))
@@ -235,7 +237,7 @@ def apply_mapping(annos, mapping):
             annot['label'] = filtered_array
             new_annos.append(annot)
         else:
-            print("Filtering for specific classes resulted in an empty label.")
+            LOGGER.debug("Filtering for specific classes resulted in an empty label.")
             #annot['label'] = filtered_array
             new_annos.append(None)
     return new_annos
@@ -267,6 +269,10 @@ def split_images_and_labels(data_root, save_dir, split="train", crop_sizes=[1024
     # Apply mapping of original labels to target labels, useful when
     if mapping:
         annos = apply_mapping(annos, mapping)
+    empty_labels = len([1 for value in annos if value is None])
+    empty_labels_pct = empty_labels / len(annos) * 100 if len(annos) > 0 else 0
+    # log portion of empty labels
+    LOGGER.info(f"Empty labels or invalid classes: {empty_labels_pct:.2f}%")
     args = [(anno, crop_sizes, gaps, im_dir, lb_dir, whole_image) for anno in annos]
     import multiprocessing
     pool = multiprocessing.Pool()
@@ -279,7 +285,10 @@ def split_images_and_labels(data_root, save_dir, split="train", crop_sizes=[1024
     for value in mapped_values:
         if isinstance(value, Exception):
             raise value
-    print(f"Done splitting {split} into patches!")
+    LOGGER.info(f"Done splitting {split} into patches!")
+    # Count the number of empty labels
+
+
 
 def split_trainval(data_root, save_dir, crop_size=1024, gap=200, rates=[1.0], mapping=None, whole_image=False):
     """
@@ -355,7 +364,7 @@ def split_test(data_root, save_dir, crop_size=1024, gap=200, rates=[1.0], whole_
     for value in mapped_values:
         if isinstance(value, Exception):
             raise value
-    print("Done splitting test set into patches!")
+    LOGGER.info("Done splitting test set into patches!")
 
 if __name__ == "__main__":
     split_trainval(data_root="DOTAv2", save_dir="DOTAv2-split")

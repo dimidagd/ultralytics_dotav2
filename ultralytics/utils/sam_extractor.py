@@ -31,9 +31,11 @@ from ultralytics import SAM
 from ultralytics.utils.instance import Bboxes, Instances
 from ultralytics.utils.ops import xyxyxyxy2xywhr
 from ultralytics.data.split_dota import load_yolo_dota
-
+from ultralytics.utils.logger import setup_logging
 import os
 import shutil
+
+LOGGER = setup_logging(__name__)
 
 def format_patches_for_image_classification(base_dir, output_dir, move=False):
     # Discover all files in the folder
@@ -308,7 +310,7 @@ def crop_image(im_path, lb_path, output_dir):
     with open(lb_path) as file:
         lines = file.readlines()
         if not lines:
-            print("Label file is empty.")
+            LOGGER.info("Label file is empty.")
             return output_imgs
 
     for i, line in enumerate(lines):
@@ -412,7 +414,7 @@ class DatasetOBBExtractor:
 
             # If no objects of interest in this image, skip.
             if len(labels_reduced) < 1:
-                print(f"Skipping {lb_path} because no objects of interest")
+                LOGGER.info(f"Skipping {lb_path} because no objects of interest")
                 continue
 
             w,h = data["ori_size"]
@@ -432,7 +434,7 @@ class DatasetOBBExtractor:
             rectangle_pts = [get_enclosing_points(mask) for mask in r.masks.data]
             rectangle_pts = [rect for rect in rectangle_pts if rect is not False]
             if len(rectangle_pts) < 1:
-                print(f"Skipping {lb_path} because no masks found")
+                LOGGER.info(f"Skipping {lb_path} because no masks found")
                 continue
             obb_boxes = np.vstack(rectangle_pts)
             # Get original label path
