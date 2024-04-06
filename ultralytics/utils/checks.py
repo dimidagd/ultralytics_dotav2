@@ -18,16 +18,18 @@ import cv2
 import numpy as np
 import requests
 import torch
-from matplotlib import font_manager
 
 from ultralytics.utils import (
     ASSETS,
     AUTOINSTALL,
     LINUX,
     LOGGER,
+    PYTHON_VERSION,
     ONLINE,
     ROOT,
+    TORCHVISION_VERSION,
     USER_CONFIG_DIR,
+    Retry,
     SimpleNamespace,
     ThreadingLocked,
     TryExcept,
@@ -40,12 +42,10 @@ from ultralytics.utils import (
     is_github_action_running,
     is_jupyter,
     is_kaggle,
-    is_online,
     is_pip_package,
     url2file,
 )
 
-PYTHON_VERSION = platform.python_version()
 
 def file_sha1(file: str) -> str:
     """
@@ -178,6 +178,8 @@ def check_imgsz(imgsz, stride=32, min_dim=1, max_dim=2, floor=0):
         imgsz = [imgsz]
     elif isinstance(imgsz, (list, tuple)):
         imgsz = list(imgsz)
+    elif isinstance(imgsz, str):  # i.e. '640' or '[640,640]'
+        imgsz = [int(imgsz)] if imgsz.isnumeric() else eval(imgsz)
     else:
         raise TypeError(
             f"'imgsz={imgsz}' is of invalid type {type(imgsz).__name__}. "
@@ -271,7 +273,7 @@ def check_version(
             result = False
         elif op == "!=" and c == v:
             result = False
-        elif op in (">=", "") and not (c >= v):  # if no constraint passed assume '>=required'
+        elif op in {">=", ""} and not (c >= v):  # if no constraint passed assume '>=required'
             result = False
         elif op == "<=" and not (c <= v):
             result = False
@@ -337,9 +339,10 @@ def check_font(font="Arial.ttf"):
     Returns:
         file (Path): Resolved font file path.
     """
-    name = Path(font).name
+    from matplotlib import font_manager
 
     # Check USER_CONFIG_DIR
+    name = Path(font).name
     file = USER_CONFIG_DIR / name
     if file.exists():
         return file
@@ -351,7 +354,7 @@ def check_font(font="Arial.ttf"):
 
     # Download to USER_CONFIG_DIR if missing
     url = f"https://ultralytics.com/assets/{name}"
-    if downloads.is_url(url):
+    if downloads.is_url(url, check=True):
         downloads.safe_download(url=url, file=file)
         return file
 
@@ -423,8 +426,9 @@ def check_requirements(requirements=ROOT.parent / "requirements.txt", exclude=()
             LOGGER.info(f"{prefix} Ultralytics requirement{'s' * (n > 1)} {pkgs} not found, attempting AutoUpdate...")
             try:
                 t = time.time()
-                assert is_online(), "AutoUpdate skipped (offline)"
-                LOGGER.info(subprocess.check_output(f"pip install --no-cache {s} {cmds}", shell=True).decode())
+                assert ONLINE, "AutoUpdate skipped (offline)"
+                with Retry(times=2, delay=1):  # run up to 2 times with 1-second retry delay
+                    LOGGER.info(subprocess.check_output(f"pip install --no-cache {s} {cmds}", shell=True).decode())
                 dt = time.time() - t
                 LOGGER.info(
                     f"{prefix} AutoUpdate success ✅ {dt:.1f}s, installed {n} package{'s' * (n > 1)}: {pkgs}\n"
@@ -451,14 +455,12 @@ def check_torchvision():
     Torchvision versions.
     """
 
-    import torchvision
-
     # Compatibility table
     compatibility_table = {"2.0": ["0.15"], "1.13": ["0.14"], "1.12": ["0.13"]}
 
     # Extract only the major and minor versions
     v_torch = ".".join(torch.__version__.split("+")[0].split(".")[:2])
-    v_torchvision = ".".join(torchvision.__version__.split("+")[0].split(".")[:2])
+    v_torchvision = ".".join(TORCHVISION_VERSION.split("+")[0].split(".")[:2])
 
     if v_torch in compatibility_table:
         compatible_versions = compatibility_table[v_torch]
@@ -666,7 +668,7 @@ def check_amp(model):
         (bool): Returns True if the AMP functionality works correctly with YOLOv8 model, else False.
     """
     device = next(model.parameters()).device  # get model device
-    if device.type in ("cpu", "mps"):
+    if device.type in {"cpu", "mps"}:
         return False  # AMP only used on CUDA devices
 
     def amp_allclose(m, im):
@@ -762,4 +764,4 @@ def cuda_is_available() -> bool:
 
 
 # Define constants
-IS_PYTHON_3_12 = check_version(PYTHON_VERSION, "==3.12", name="Python ", hard=False)
+IS_PYTHON_3_12 = PYTHON_VERSION.startswith("3.12")
