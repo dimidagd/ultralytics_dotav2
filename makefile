@@ -11,6 +11,7 @@ WANDB_MODE=online
 epochs=100
 MODEL=yolov8n-obb.yaml
 PRETRAINED=False
+SHM_SIZE=5G
 
 welcome:
 	echo "Welcome to the YOLO detector build workflows"
@@ -22,7 +23,7 @@ make_dirs:
 	mkdir -p ${DATA_FOLDER_HOST} ${RUNS_FOLDER_HOST}
 
 train_dotav2: build make_dirs
-	docker run -it --rm --gpus all --shm-size=5G \
+	docker run -it --rm --gpus all --shm-size=${SHM_SIZE} \
 	-e WANDB_MODE \
 	-v ${RUNS_FOLDER_HOST}:/home/user/workdev/runs \
 	-v ${DATA_FOLDER_HOST}:/home/user/workdev/datasets \
@@ -41,7 +42,7 @@ train_dotav2: build make_dirs
 	"
 
 evaluate_dotav2: build make_dirs
-	docker run -it --rm --gpus all --shm-size=5G \
+	docker run -it --rm --gpus all --shm-size=${SHM_SIZE} \
 	-e WANDB_MODE \
 	-v ${RUNS_FOLDER_HOST}:/home/user/workdev/runs \
 	-v ${DATA_FOLDER_HOST}:/home/user/workdev/datasets \
@@ -56,7 +57,7 @@ evaluate_dotav2: build make_dirs
 	"
 
 train_HRSC2016: build make_dirs
-	docker run -it --rm --gpus all --shm-size=5G \
+	docker run -it --rm --gpus all --shm-size=${SHM_SIZE} \
 	-e WANDB_MODE \
 	-v ${RUNS_FOLDER_HOST}:/home/user/workdev/runs \
 	-v ${DATA_FOLDER_HOST}:/home/user/workdev/datasets \
@@ -73,7 +74,7 @@ train_HRSC2016: build make_dirs
 	"
 
 extract_patches_HRSC2016: train_HRSC2016
-	docker run -it --rm --gpus all --shm-size=5G \
+	docker run -it --rm --gpus all --shm-size=${SHM_SIZE} \
 	-v ${RUNS_FOLDER_HOST}:/home/user/workdev/runs \
 	-v ${DATA_FOLDER_HOST}:/home/user/workdev/datasets \
 	--entrypoint python3 \
@@ -87,7 +88,7 @@ untar_pretrained: make_dirs
 	tar -xvf ${PRETRAINED_HF_TAR} -C ${DATA_FOLDER_HOST}
 
 train_classifier_HRSC2016: build untar_pretrained extract_patches_HRSC2016
-	docker run -it --rm --gpus all --shm-size=5G \
+	docker run -it --rm --gpus all --shm-size=${SHM_SIZE} \
 	-v ${RUNS_FOLDER_HOST}:/home/user/workdev/runs \
 	-v ${DATA_FOLDER_HOST}:/home/user/workdev/datasets \
 	--entrypoint python3  \
