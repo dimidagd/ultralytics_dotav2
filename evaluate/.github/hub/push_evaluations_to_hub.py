@@ -15,16 +15,18 @@ GIT_UP_TO_DATE = "On branch main\nYour branch is up to date with 'origin/main'.\
 
 COMMIT_PLACEHOLDER = "{COMMIT_PLACEHOLDER}"
 
+
 def get_git_tag(lib_path, commit_hash):
     # check if commit has a tag, see: https://stackoverflow.com/questions/1474115/how-to-find-the-tag-associated-with-a-given-git-commit
     command = f"git describe --exact-match {commit_hash}"
-    output = subprocess.run(command.split(),
-            stderr=subprocess.PIPE,
-            stdout=subprocess.PIPE,
-            encoding="utf-8",
-            cwd=lib_path,
-            env=os.environ.copy(),
-        )
+    output = subprocess.run(
+        command.split(),
+        stderr=subprocess.PIPE,
+        stdout=subprocess.PIPE,
+        encoding="utf-8",
+        cwd=lib_path,
+        env=os.environ.copy(),
+    )
     tag = output.stdout.strip()
     if re.match(r"v\d*\.\d*\.\d*", tag) is not None:
         return tag
@@ -42,6 +44,7 @@ def copy_recursive(source_base_path, target_base_path):
         else:
             shutil.copy(item, target_path)
 
+
 def update_evaluate_dependency(requirements_path, commit_hash):
     """Updates the evaluate requirement with the latest commit."""
     with open(requirements_path, "r") as f:
@@ -50,17 +53,18 @@ def update_evaluate_dependency(requirements_path, commit_hash):
     with open(requirements_path, "w") as f:
         f.write(file_content)
 
+
 def push_module_to_hub(module_path, type, token, commit_hash, tag=None):
     module_name = module_path.stem
     org = f"evaluate-{type}"
-    
-    repo_url = create_repo(org + "/" + module_name, repo_type="space", space_sdk="gradio", exist_ok=True, token=token)    
+
+    repo_url = create_repo(org + "/" + module_name, repo_type="space", space_sdk="gradio", exist_ok=True, token=token)
     repo_path = Path(tempfile.mkdtemp())
-    
+
     scheme = urlparse(repo_url).scheme
     repo_url = repo_url.replace(f"{scheme}://", f"{scheme}://user:{token}@")
     clean_repo_url = re.sub(r"(https?)://.*@", r"\1://", repo_url)
-    
+
     try:
         subprocess.run(
             f"git clone {repo_url}".split(),
@@ -76,10 +80,10 @@ def push_module_to_hub(module_path, type, token, commit_hash, tag=None):
         raise OSError(f"Could not clone from '{clean_repo_url}'")
 
     repo = Repository(local_dir=repo_path / module_name, use_auth_token=token)
-    
+
     copy_recursive(module_path, repo_path / module_name)
     update_evaluate_dependency(repo_path / module_name / "requirements.txt", commit_hash)
-    
+
     repo.git_add()
     try:
         repo.git_commit(f"Update Space (evaluate main: {commit_hash[:8]})")
@@ -93,7 +97,7 @@ def push_module_to_hub(module_path, type, token, commit_hash, tag=None):
 
     if tag is not None:
         repo.add_tag(tag, message="add evaluate tag", remote="origin")
-    
+
     shutil.rmtree(repo_path)
 
 
@@ -109,8 +113,8 @@ if __name__ == "__main__":
         logger.info(f"Found tag: {git_tag}.")
 
     for type, dir in zip(evaluation_types, evaluation_paths):
-        if (evaluate_lib_path/dir).exists():
-            for module_path in (evaluate_lib_path/dir).iterdir():
+        if (evaluate_lib_path / dir).exists():
+            for module_path in (evaluate_lib_path / dir).iterdir():
                 if module_path.is_dir():
                     logger.info(f"Updating: module {module_path.name}.")
                     push_module_to_hub(module_path, type, token, commit_hash, tag=git_tag)

@@ -1,6 +1,6 @@
 # Source: https://github.com/MilaNLProc/honest
 
-""" HONEST score """
+"""HONEST score"""
 
 from collections import defaultdict
 

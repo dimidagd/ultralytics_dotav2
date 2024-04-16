@@ -116,9 +116,7 @@ class MatthewsCorrelation(evaluate.Metric):
                     "references": datasets.Value("int32"),
                 }
             ),
-            reference_urls=[
-                "https://scikit-learn.org/stable/modules/generated/sklearn.metrics.matthews_corrcoef.html"
-            ],
+            reference_urls=["https://scikit-learn.org/stable/modules/generated/sklearn.metrics.matthews_corrcoef.html"],
         )
 
     def _compute(self, predictions, references, sample_weight=None, average=None):

@@ -11,7 +11,8 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-""" CoVal metric. """
+"""CoVal metric."""
+
 import coval  # From: git+https://github.com/ns-moosavi/coval.git noqa: F401
 import datasets
 from coval.conll import reader, util
@@ -107,7 +108,7 @@ Column	Type	Description
 11	Named Entities	These columns identifies the spans representing various named entities.
 12:N	Predicate Arguments	There is one column each of predicate argument structure information for the predicate mentioned in Column 7.
 N	Coreference	Coreference chain information encoded in a parenthesis structure.
-More informations on the format can be found here (section "*_conll File Format"): http://www.conll.cemantix.org/2012/data.html
+More information on the format can be found here (section "*_conll File Format"): http://www.conll.cemantix.org/2012/data.html
 
 Details on the evaluation on CoNLL can be found here: https://github.com/ns-moosavi/coval/blob/master/conll/README.md
 
@@ -168,7 +169,6 @@ Examples:
 def get_coref_infos(
     key_lines, sys_lines, NP_only=False, remove_nested=False, keep_singletons=True, min_span=False, doc="dummy_doc"
 ):
-
     key_doc_lines = {doc: key_lines}
     sys_doc_lines = {doc: sys_lines}
 

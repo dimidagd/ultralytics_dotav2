@@ -13,8 +13,7 @@
 # limitations under the License.
 
 # Lint as: python3
-""" EvaluationModuleInfo records information we know about a dataset and a metric.
-"""
+"""EvaluationModuleInfo records information we know about a dataset and a metric."""
 
 import dataclasses
 import json

@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-""" Toxicity detection measurement. """
+"""Toxicity detection measurement."""
 
 import datasets
 from transformers import pipeline

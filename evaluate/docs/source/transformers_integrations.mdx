@@ -53,7 +53,7 @@ trainer.train()
 
 ## Seq2SeqTrainer
 
-We can use the [`~transformers.Seq2SeqTrainer`] for sequence-to-sequence tasks such as translation or summarization. For such generative tasks usually metrics such as ROUGE or BLEU are evaluated. However, these metrics require that we generate some text with the model rather than a single forward pass as with e.g. classification. The `Seq2SeqTrainer` allows for the use of the generate method when setting `predict_with_generate=True` which will generate text for each sample in the evaluation set. That means we evaluate generated text within the `compute_metric` function. We just need to decode the predictions and labels first.
+We can use the [`~transformers.Seq2SeqTrainer`] for sequence-to-sequence tasks such as translation or summarization. For such generative tasks usually metrics such as ROGUE or BLEU are evaluated. However, these metrics require that we generate some text with the model rather than a single forward pass as with e.g. classification. The `Seq2SeqTrainer` allows for the use of the generate method when setting `predict_with_generate=True` which will generate text for each sample in the evaluation set. That means we evaluate generated text within the `compute_metric` function. We just need to decode the predictions and labels first.
 
 ```python
 import nltk
@@ -82,7 +82,7 @@ tokenized_billsum = billsum.map(preprocess_function, batched=True)
 
 # Setup evaluation
 nltk.download("punkt", quiet=True)
-metric = evaluate.load("rouge")
+metric = evaluate.load("rogue")
 
 def compute_metrics(eval_preds):
     preds, labels = eval_preds

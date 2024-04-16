@@ -19,6 +19,7 @@ from shapely.geometry import Polygon
 
 LOGGER = setup_logging()
 
+
 def bbox_iof(polygon1, bbox2, eps=1e-6):
     """
     Calculate iofs between bbox1 and bbox2.
@@ -57,11 +58,11 @@ def bbox_iof(polygon1, bbox2, eps=1e-6):
 
 def process_file(im_file, lb_file):
     w, h = exif_size(Image.open(im_file))
-    if Path(lb_file).exists(): # XXX: Mention in PR that this is needed for images without labels.
+    if Path(lb_file).exists():  # XXX: Mention in PR that this is needed for images without labels.
         with open(lb_file) as f:
             lb = [x.split() for x in f.read().strip().splitlines() if len(x)]
             lb = np.array(lb, dtype=np.float32)
-    else:   # empty label
+    else:  # empty label
         LOGGER.info(f"Empty label for {im_file}")
         lb = np.array([], dtype=np.float32)
     return dict(ori_size=(h, w), label=lb, filepath=im_file)
@@ -94,8 +95,11 @@ def load_yolo_dota(data_root, split="train", fast=False):
     lb_files = img2label_paths(im_files)
     annos = []
     from concurrent.futures import ThreadPoolExecutor
+
     with ThreadPoolExecutor() as executor:
-        annos = list(tqdm(executor.map(process_file, im_files, lb_files), total=len(im_files), desc="Loading image metadata"))
+        annos = list(
+            tqdm(executor.map(process_file, im_files, lb_files), total=len(im_files), desc="Loading image metadata")
+        )
 
     return annos
 
@@ -193,7 +197,9 @@ def crop_and_save(anno, windows, window_objs, im_dir, lb_dir):
 
         cv2.imwrite(str(Path(im_dir) / f"{new_name}.jpg"), patch_im)
         label = window_objs[i]
-        if len(label) != 0: # Mention in PR that this is needed for images without labels as it generated an empty .txt file.
+        if (
+            len(label) != 0
+        ):  # Mention in PR that this is needed for images without labels as it generated an empty .txt file.
             label[:, 1::2] -= x_start
             label[:, 2::2] -= y_start
             label[:, 1::2] /= pw
@@ -204,6 +210,7 @@ def crop_and_save(anno, windows, window_objs, im_dir, lb_dir):
                 formatted_coords = ["{:.6g}".format(coord) for coord in lb[1:]]
                 f.write(f"{int(lb[0])} {' '.join(formatted_coords)}\n")
 
+
 def process_anno(args):
     anno, crop_sizes, gaps, im_dir, lb_dir, whole_image = args
     if anno is None:
@@ -212,6 +219,7 @@ def process_anno(args):
     window_objs = get_window_obj(anno, windows, whole_image=whole_image)
     crop_and_save(anno, windows, window_objs, str(im_dir), str(lb_dir))
     return True
+
 
 def apply_mapping(annos, mapping):
     """
@@ -223,7 +231,7 @@ def apply_mapping(annos, mapping):
     """
     new_annos = []
     for annot in annos:
-        array = annot['label']
+        array = annot["label"]
         if array.ndim < 2:
             LOGGER.debug("Skipping empty label.")
             new_annos.append(None)
@@ -234,15 +242,18 @@ def apply_mapping(annos, mapping):
         # Apply the mapping to the first column of the array
         if filtered_array.size > 0:
             filtered_array[:, 0] = np.vectorize(mapping.get)(filtered_array[:, 0])
-            annot['label'] = filtered_array
+            annot["label"] = filtered_array
             new_annos.append(annot)
         else:
             LOGGER.debug("Filtering for specific classes resulted in an empty label.")
-            #annot['label'] = filtered_array
+            # annot['label'] = filtered_array
             new_annos.append(None)
     return new_annos
 
-def split_images_and_labels(data_root, save_dir, split="train", crop_sizes=[1024], gaps=[200], mapping=None, whole_image=False):
+
+def split_images_and_labels(
+    data_root, save_dir, split="train", crop_sizes=[1024], gaps=[200], mapping=None, whole_image=False
+):
     """
     Split both images and labels.
 
@@ -275,9 +286,18 @@ def split_images_and_labels(data_root, save_dir, split="train", crop_sizes=[1024
     LOGGER.info(f"Empty labels or invalid classes: {empty_labels_pct:.2f}%")
     args = [(anno, crop_sizes, gaps, im_dir, lb_dir, whole_image) for anno in annos]
     import multiprocessing
+
     pool = multiprocessing.Pool()
 
-    mapped_values = list(tqdm(pool.imap_unordered(process_anno, args,), total=len(args)))
+    mapped_values = list(
+        tqdm(
+            pool.imap_unordered(
+                process_anno,
+                args,
+            ),
+            total=len(args),
+        )
+    )
     pool.close()
     # assert all mapped values are true
     assert all(mapped_values)
@@ -287,7 +307,6 @@ def split_images_and_labels(data_root, save_dir, split="train", crop_sizes=[1024
             raise value
     LOGGER.info(f"Done splitting {split} into patches!")
     # Count the number of empty labels
-
 
 
 def split_trainval(data_root, save_dir, crop_size=1024, gap=200, rates=[1.0], mapping=None, whole_image=False):
@@ -319,6 +338,7 @@ def split_trainval(data_root, save_dir, crop_size=1024, gap=200, rates=[1.0], ma
     for split in ["train", "val"]:
         split_images_and_labels(data_root, save_dir, split, crop_sizes, gaps, mapping=mapping, whole_image=whole_image)
 
+
 def crop_and_save_patches(args):
     im_file, save_dir, crop_sizes, gaps, whole_image = args
     w, h = exif_size(Image.open(im_file))
@@ -330,6 +350,7 @@ def crop_and_save_patches(args):
         new_name = f"{name}__{x_stop - x_start}__{x_start}___{y_start}"
         patch_im = im[y_start:y_stop, x_start:x_stop]
         cv2.imwrite(str(save_dir / f"{new_name}.jpg"), patch_im)
+
 
 def split_test(data_root, save_dir, crop_size=1024, gap=200, rates=[1.0], whole_image=False):
     """
@@ -358,13 +379,23 @@ def split_test(data_root, save_dir, crop_size=1024, gap=200, rates=[1.0], whole_
     args = [(im_file, save_dir, crop_sizes, gaps, whole_image) for im_file in im_files]
 
     import multiprocessing
+
     pool = multiprocessing.Pool()
-    mapped_values = list(tqdm(pool.imap_unordered(crop_and_save_patches, args,), total=len(args)))
+    mapped_values = list(
+        tqdm(
+            pool.imap_unordered(
+                crop_and_save_patches,
+                args,
+            ),
+            total=len(args),
+        )
+    )
     pool.close()
     for value in mapped_values:
         if isinstance(value, Exception):
             raise value
     LOGGER.info("Done splitting test set into patches!")
+
 
 if __name__ == "__main__":
     split_trainval(data_root="DOTAv2", save_dir="DOTAv2-split")

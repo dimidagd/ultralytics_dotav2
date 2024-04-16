@@ -1,6 +1,6 @@
 ---
 title: Wilcoxon
-emoji: 🤗 
+emoji: 🤗
 colorFrom: blue
 colorTo: green
 sdk: gradio
@@ -8,12 +8,11 @@ sdk_version: 3.0.2
 app_file: app.py
 pinned: false
 tags:
-- evaluate
-- comparison
+  - evaluate
+  - comparison
 description: >-
   Wilcoxon's test is a signed-rank test for comparing paired samples.
 ---
-
 
 # Comparison Card for Wilcoxon
 
@@ -21,7 +20,7 @@ description: >-
 
 Wilcoxon's test is a non-parametric signed-rank test that tests whether the distribution of the differences is symmetric about zero. It can be used to compare the predictions of two models.
 
-## How to use 
+## How to use
 
 The Wilcoxon comparison is used to analyze paired ordinal data.
 
@@ -41,7 +40,7 @@ The Wilcoxon comparison outputs two things:
 
 `p`: The p value.
 
-## Examples 
+## Examples
 
 Example comparison:
 

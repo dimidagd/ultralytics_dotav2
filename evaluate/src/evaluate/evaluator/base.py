@@ -93,7 +93,7 @@ EVALUTOR_COMPUTE_START_DOCSTRING = r"""
 
 EVALUATOR_COMPUTE_RETURN_DOCSTRING = r"""
     Return:
-        A `Dict`. The keys represent metric keys calculated for the `metric` spefied in function arguments. For the
+        A `Dict`. The keys represent metric keys calculated for the `metric` specified in function arguments. For the
         `"simple"` strategy, the value is the metric score. For the `"bootstrap"` strategy, the value is a `Dict`
         containing the score, the confidence interval and the standard error calculated for each metric key.
 """
@@ -235,7 +235,6 @@ class Evaluator(ABC):
         label_column: str = "label",
         label_mapping: Optional[Dict[str, Number]] = None,
     ) -> Dict[str, float]:
-
         result = {}
 
         self.check_for_mismatch_in_device_setup(device, model_or_pipeline)
@@ -383,9 +382,7 @@ class Evaluator(ABC):
                 logger.warning("`data` is a preloaded Dataset! Ignoring `subset` and `split`.")
             return data
         else:
-            raise ValueError(
-                "Please specify a valid `data` object - either a `str` with a name or a `Dataset` object."
-            )
+            raise ValueError("Please specify a valid `data` object - either a `str` with a name or a `Dataset` object.")
 
     def prepare_data(self, data: Dataset, input_column: str, label_column: str, *args, **kwargs):
         """

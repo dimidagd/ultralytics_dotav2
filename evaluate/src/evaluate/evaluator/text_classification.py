@@ -64,9 +64,7 @@ class TextClassificationEvaluator(Evaluator):
 
     def prepare_data(self, data: Union[str, Dataset], input_column: str, second_input_column: str, label_column: str):
         if data is None:
-            raise ValueError(
-                "Please specify a valid `data` object - either a `str` with a name or a `Dataset` object."
-            )
+            raise ValueError("Please specify a valid `data` object - either a `str` with a name or a `Dataset` object.")
 
         self.check_required_columns(data, {"input_column": input_column, "label_column": label_column})
 

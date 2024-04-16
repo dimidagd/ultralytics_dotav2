@@ -93,14 +93,10 @@ class QuestionAnsweringEvaluator(Evaluator):
     def __init__(self, task="question-answering", default_metric_name=None):
         super().__init__(task, default_metric_name=default_metric_name)
 
-    def prepare_data(
-        self, data: Dataset, question_column: str, context_column: str, id_column: str, label_column: str
-    ):
+    def prepare_data(self, data: Dataset, question_column: str, context_column: str, id_column: str, label_column: str):
         """Prepare data."""
         if data is None:
-            raise ValueError(
-                "Please specify a valid `data` object - either a `str` with a name or a `Dataset` object."
-            )
+            raise ValueError("Please specify a valid `data` object - either a `str` with a name or a `Dataset` object.")
         self.check_required_columns(
             data,
             {
@@ -112,9 +108,7 @@ class QuestionAnsweringEvaluator(Evaluator):
         )
 
         metric_inputs = dict()
-        metric_inputs["references"] = [
-            {"id": element[id_column], "answers": element[label_column]} for element in data
-        ]
+        metric_inputs["references"] = [{"id": element[id_column], "answers": element[label_column]} for element in data]
 
         return metric_inputs, {
             "question": DatasetColumn(data, question_column),
@@ -127,9 +121,7 @@ class QuestionAnsweringEvaluator(Evaluator):
         In this case, the answer text list should be `[]`.
         """
         original_num_rows = data.num_rows
-        nonempty_num_rows = data.filter(
-            lambda x: len(x[label_column]["text"]) > 0, load_from_cache_file=False
-        ).num_rows
+        nonempty_num_rows = data.filter(lambda x: len(x[label_column]["text"]) > 0, load_from_cache_file=False).num_rows
         if original_num_rows > nonempty_num_rows:
             return True
         else:

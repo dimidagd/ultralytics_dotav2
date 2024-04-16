@@ -1,5 +1,5 @@
 # Lint as: python3
-""" HuggingFace/Evaluate is an open library for evaluation.
+"""HuggingFace/Evaluate is an open library for evaluation.
 
 Note:
 
@@ -60,13 +60,13 @@ TEMPLATE_REQUIRE = [
     # to populate metric template
     "cookiecutter",
     # for the gradio widget
-    "gradio>=3.0.0"
+    "gradio>=3.0.0",
 ]
 
 EVALUATOR_REQUIRE = [
-   "transformers",
-   # for bootstrap computations in Evaluator
-   "scipy>=1.7.1",
+    "transformers",
+    # for bootstrap computations in Evaluator
+    "scipy>=1.7.1",
 ]
 
 TESTS_REQUIRE = [
@@ -92,7 +92,7 @@ TESTS_REQUIRE = [
     "scikit-learn",
     "jiwer",
     "sentencepiece",  # for bleurt
-    "transformers", # for evaluator
+    "transformers",  # for evaluator
     "mauve-text",
     "trectools",
     # to speed up pip backtracking
@@ -120,7 +120,7 @@ EXTRAS_REQUIRE = {
         "s3fs",
     ],
     "template": TEMPLATE_REQUIRE,
-    "evaluator": EVALUATOR_REQUIRE
+    "evaluator": EVALUATOR_REQUIRE,
 }
 
 setup(

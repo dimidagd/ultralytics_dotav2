@@ -361,6 +361,7 @@ def safe_download(
 
     if unzip and f.exists() and f.suffix in ("", ".zip", ".tar", ".gz", ".tgz"):
         from zipfile import is_zipfile
+
         # Safety feature, check for md5sum if provided
         if md5sum and md5sum != checks.file_md5(f):
             raise ValueError(f"md5 {md5sum} mismatch for {f}: {checks.file_md5(f)}, retrying...")
@@ -370,7 +371,7 @@ def safe_download(
         elif f.suffix in (".tar", ".gz", ".tgz"):
             LOGGER.info(f"Unzipping {f} to {unzip_dir}...")
             # Create the command with pv (pipe viewer) to show progress
-            compressed = [] if f.suffix==".tar" else ["pigz", "-dc","|"]
+            compressed = [] if f.suffix == ".tar" else ["pigz", "-dc", "|"]
             command = ["pv", str(f), "|"] + compressed + ["tar", "xf", "-", "--directory", str(unzip_dir)]
             # Run the command
             subprocess.run(" ".join(command), shell=True, check=True)
@@ -410,11 +411,13 @@ def get_github_assets(repo="ultralytics/assets", version="latest", retry=False):
     data = r.json()
     return data["tag_name"], [x["name"] for x in data["assets"]]  # tag, assets i.e. ['yolov8n.pt', 'yolov8s.pt', ...]
 
+
 def read_md5list(file_path):
     with open(file_path) as file:
         # Using list comprehension to split each line and extract MD5 hash and file path
         md5_hashes, file_paths = zip(*(line.strip().split() for line in file if line.strip()))
     return list(md5_hashes), list(file_paths)
+
 
 def attempt_download_asset(file, repo="ultralytics/assets", release="v8.1.0", **kwargs):
     """
@@ -469,10 +472,14 @@ def attempt_download_asset(file, repo="ultralytics/assets", release="v8.1.0", **
 
         return str(file)
 
-def safe_download_wrapper(args,
-    **kwargs):
-    safe_download(url=args[0],dir=args[1], md5sum=args[2], **kwargs)
-def download(url, dir=Path.cwd(), unzip=True, delete=False, curl=False, threads=1, retry=3, exist_ok=False, md5_hashes=None):
+
+def safe_download_wrapper(args, **kwargs):
+    safe_download(url=args[0], dir=args[1], md5sum=args[2], **kwargs)
+
+
+def download(
+    url, dir=Path.cwd(), unzip=True, delete=False, curl=False, threads=1, retry=3, exist_ok=False, md5_hashes=None
+):
     """
     Downloads files from specified URLs to a given directory. Supports concurrent downloads if multiple threads are
     specified.
@@ -494,6 +501,7 @@ def download(url, dir=Path.cwd(), unzip=True, delete=False, curl=False, threads=
     """
     dir = Path(dir)
     from functools import partial
+
     if isinstance(url, list):
         if md5_hashes is None:
             md5_hashes = repeat(None)
@@ -502,7 +510,8 @@ def download(url, dir=Path.cwd(), unzip=True, delete=False, curl=False, threads=
     if threads > 1:
         with Pool(threads) as pool:
             pool.map(
-                partial(safe_download_wrapper,
+                partial(
+                    safe_download_wrapper,
                     unzip=unzip,
                     delete=delete,
                     curl=curl,

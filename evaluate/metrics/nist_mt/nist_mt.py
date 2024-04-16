@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """NLTK's NIST implementation on both the sentence and corpus level"""
+
 from typing import Dict, Optional
 
 import datasets

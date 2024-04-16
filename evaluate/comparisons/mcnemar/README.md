@@ -1,6 +1,6 @@
 ---
 title: McNemar
-emoji: 🤗 
+emoji: 🤗
 colorFrom: blue
 colorTo: green
 sdk: gradio
@@ -8,8 +8,8 @@ sdk_version: 3.0.2
 app_file: app.py
 pinned: false
 tags:
-- evaluate
-- comparison
+  - evaluate
+  - comparison
 description: >-
   McNemar's test is a diagnostic test over a contingency table resulting from the predictions of two classifiers. The test compares the sensitivity and specificity of the diagnostic tests on the same group reference labels. It can be computed with:
   McNemar = (SE - SP)**2 / SE + SP
@@ -18,22 +18,22 @@ description: >-
   SP: Specificity (Test 1 negative; Test 2 positive)
 ---
 
-
 # Comparison Card for McNemar
 
 ## Comparison description
 
 McNemar's test is a non-parametric diagnostic test over a contingency table resulting from the predictions of two classifiers. The test compares the sensitivity and specificity of the diagnostic tests on the same group reference labels. It can be computed with:
 
-McNemar = (SE - SP)**2 / SE + SP
+McNemar = (SE - SP)\*\*2 / SE + SP
 
 Where:
-* SE: Sensitivity (Test 1 positive; Test 2 negative)
-* SP: Specificity (Test 1 negative; Test 2 positive)
+
+- SE: Sensitivity (Test 1 positive; Test 2 negative)
+- SP: Specificity (Test 1 negative; Test 2 positive)
 
 In other words, SE and SP are the diagonal elements of the contingency table for the classifier predictions (`predictions1` and `predictions2`) with respect to the ground truth `references`.
 
-## How to use 
+## How to use
 
 The McNemar comparison calculates the proportions of responses that exhibit disagreement between two classifiers. It is used to analyze paired nominal data.
 
@@ -55,7 +55,7 @@ The McNemar comparison outputs two things:
 
 `p`: The p value.
 
-## Examples 
+## Examples
 
 Example comparison:
 

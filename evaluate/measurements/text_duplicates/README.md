@@ -8,8 +8,8 @@ sdk_version: 3.0.2
 app_file: app.py
 pinned: false
 tags:
-- evaluate
-- measurement
+  - evaluate
+  - measurement
 description: >-
   Returns the duplicate fraction of duplicate strings in the input.
 ---
@@ -31,14 +31,16 @@ This measurement requires a list of strings as input:
 ```
 
 ### Inputs
+
 - **data** (list of `str`): The input list of strings for which the duplicates are calculated.
 
 ### Output Values
+
 - **duplicate_fraction**(`float`): the fraction of duplicates in the input string(s).
 - **duplicates_dict**(`list`): (optional) a list of tuples with the duplicate strings and the number of times they are repeated.
 
-By default, this measurement outputs a dictionary containing the fraction of duplicates in the input string(s) (`duplicate_fraction`):
-  )
+By default, this measurement outputs a dictionary containing the fraction of duplicates in the input string(s) (`duplicate_fraction`): )
+
 ```python
 {'duplicate_fraction': 0.33333333333333337}
 ```
@@ -64,6 +66,7 @@ Example with no duplicates
 ```
 
 Example with multiple duplicates and `list_duplicates=True`:
+
 ```python
 >>> data = ["hello sun", "goodbye moon", "hello sun", "foo bar", "foo bar"]
 >>> duplicates = evaluate.load("text_duplicates")
@@ -74,6 +77,6 @@ Example with multiple duplicates and `list_duplicates=True`:
 
 ## Citation(s)
 
-
 ## Further References
+
 - [`hashlib` library](https://docs.python.org/3/library/hashlib.html)

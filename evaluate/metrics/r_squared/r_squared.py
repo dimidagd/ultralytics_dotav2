@@ -14,7 +14,6 @@
 
 """R squared metric."""
 
-
 import datasets
 import numpy as np
 

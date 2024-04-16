@@ -8,8 +8,8 @@ sdk_version: 3.0.2
 app_file: app.py
 pinned: false
 tags:
-- evaluate
-- measurement
+  - evaluate
+  - measurement
 description: >-
   Returns the total number of words, and the number of unique words in the input data.
 ---
@@ -31,16 +31,18 @@ This measurement requires a list of strings as input:
 ```
 
 ### Inputs
+
 - **data** (list of `str`): The input list of strings for which the word length is calculated.
 - **max_vocab** (`int`): (optional) the top number of words to consider (can be specified if dataset is too large)
 
 ### Output Values
+
 - **total_word_count** (`int`): the total number of words in the input string(s).
 - **unique_words** (`int`): the number of unique words in the input string(s).
 
 Output Example(s):
 
-```python
+````python
 {'total_word_count': 5, 'unique_words': 4}
 
 
@@ -54,9 +56,10 @@ Example for a single string
 >>> results = wordcount.compute(data=data)
 >>> print(results)
 {'total_word_count': 5, 'unique_words': 5}
-```
+````
 
 Example for a multiple strings
+
 ```python
 >>> data = ["hello sun and goodbye moon", "foo bar foo bar"]
 >>> wordcount = evaluate.load("word_count")
@@ -77,6 +80,6 @@ Example for a dataset from 🤗 Datasets:
 
 ## Citation(s)
 
-
 ## Further References
+
 - [Sklearn `CountVectorizer`](https://scikit-learn.org/stable/modules/generated/sklearn.feature_extraction.text.CountVectorizer.html)

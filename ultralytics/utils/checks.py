@@ -61,7 +61,7 @@ def file_sha1(file: str) -> str:
 
     sha1 = hashlib.sha1()
     with open(file, "rb") as f:
-        while (chunk := f.read(8192)):
+        while chunk := f.read(8192):
             sha1.update(chunk)
     return sha1.hexdigest()
 
@@ -80,9 +80,10 @@ def file_md5(file: str) -> str:
 
     md5 = hashlib.md5()
     with open(file, "rb") as f:
-        while (chunk := f.read(8192)):
+        while chunk := f.read(8192):
             md5.update(chunk)
     return md5.hexdigest()
+
 
 def parse_requirements(file_path=ROOT.parent / "requirements.txt", package=""):
     """

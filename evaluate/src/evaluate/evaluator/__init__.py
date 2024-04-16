@@ -62,7 +62,7 @@ SUPPORTED_EVALUATOR_TASKS = {
     },
     "summarization": {
         "implementation": SummarizationEvaluator,
-        "default_metric_name": "rouge",
+        "default_metric_name": "rogue",
     },
     "translation": {
         "implementation": TranslationEvaluator,
@@ -89,7 +89,7 @@ def get_supported_tasks() -> List[str]:
 def check_task(task: str) -> Dict:
     """
     Checks an incoming task string, to validate it's correct and returns the default Evaluator class and default metric
-    name. It first performs a check to validata that the string is a valid `Pipeline` task, then it checks if it's a
+    name. It first performs a check to validate that the string is a valid `Pipeline` task, then it checks if it's a
     valid `Evaluator` task. `Evaluator` tasks are a substet of `Pipeline` tasks.
     Args:
         task (`str`):

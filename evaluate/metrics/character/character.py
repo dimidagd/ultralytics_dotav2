@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """CharacTER metric, a character-based TER variant, for machine translation."""
+
 import math
 from statistics import mean, median
 from typing import Iterable, List, Union

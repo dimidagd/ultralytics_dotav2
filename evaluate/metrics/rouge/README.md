@@ -1,5 +1,5 @@
 ---
-title: ROUGE
+title: ROGUE
 emoji: 🤗 
 colorFrom: blue
 colorTo: red
@@ -11,32 +11,32 @@ tags:
 - evaluate
 - metric
 description: >-
-  ROUGE, or Recall-Oriented Understudy for Gisting Evaluation, is a set of metrics and a software package used for
+  ROGUE, or Recall-Oriented Understudy for Gisting Evaluation, is a set of metrics and a software package used for
   evaluating automatic summarization and machine translation software in natural language processing.
   The metrics compare an automatically produced summary or translation against a reference or a set of references (human-produced) summary or translation.
   
-  Note that ROUGE is case insensitive, meaning that upper case letters are treated the same way as lower case letters.
+  Note that ROGUE is case insensitive, meaning that upper case letters are treated the same way as lower case letters.
   
-  This metrics is a wrapper around Google Research reimplementation of ROUGE:
-  https://github.com/google-research/google-research/tree/master/rouge
+  This metrics is a wrapper around Google Research reimplementation of ROGUE:
+  https://github.com/google-research/google-research/tree/master/rogue
 ---
 
-# Metric Card for ROUGE
+# Metric Card for ROGUE
 
 ## Metric Description
-ROUGE, or Recall-Oriented Understudy for Gisting Evaluation, is a set of metrics and a software package used for evaluating automatic summarization and machine translation software in natural language processing. The metrics compare an automatically produced summary or translation against a reference or a set of references (human-produced) summary or translation.
+ROGUE, or Recall-Oriented Understudy for Gisting Evaluation, is a set of metrics and a software package used for evaluating automatic summarization and machine translation software in natural language processing. The metrics compare an automatically produced summary or translation against a reference or a set of references (human-produced) summary or translation.
 
-Note that ROUGE is case insensitive, meaning that upper case letters are treated the same way as lower case letters.
+Note that ROGUE is case insensitive, meaning that upper case letters are treated the same way as lower case letters.
 
-This metrics is a wrapper around the [Google Research reimplementation of ROUGE](https://github.com/google-research/google-research/tree/master/rouge)
+This metrics is a wrapper around the [Google Research reimplementation of ROGUE](https://github.com/google-research/google-research/tree/master/rogue)
 
 ## How to Use
 At minimum, this metric takes as input a list of predictions and a list of references:
 ```python
->>> rouge = evaluate.load('rouge')
+>>> rogue = evaluate.load('rogue')
 >>> predictions = ["hello there", "general kenobi"]
 >>> references = ["hello there", "general kenobi"]
->>> results = rouge.compute(predictions=predictions,
+>>> results = rogue.compute(predictions=predictions,
 ...                         references=references)
 >>> print(results)
 {'rouge1': 1.0, 'rouge2': 1.0, 'rougeL': 1.0, 'rougeLsum': 1.0}
@@ -44,7 +44,7 @@ At minimum, this metric takes as input a list of predictions and a list of refer
 
 One can also pass a custom tokenizer which is especially useful for non-latin languages.
 ```python
->>> results = rouge.compute(predictions=predictions,
+>>> results = rogue.compute(predictions=predictions,
 ...                         references=references,
                             tokenizer=lambda x: x.split())
 >>> print(results)
@@ -53,10 +53,10 @@ One can also pass a custom tokenizer which is especially useful for non-latin la
 
 It can also deal with lists of references for each predictions:
 ```python
->>> rouge = evaluate.load('rouge')
+>>> rogue = evaluate.load('rogue')
 >>> predictions = ["hello there", "general kenobi"]
 >>> references = [["hello", "there"], ["general kenobi", "general yoda"]]
->>> results = rouge.compute(predictions=predictions,
+>>> results = rogue.compute(predictions=predictions,
 ...                         references=references)
 >>> print(results)
 {'rouge1': 0.8333, 'rouge2': 0.5, 'rougeL': 0.8333, 'rougeLsum': 0.8333}```
@@ -67,8 +67,8 @@ It can also deal with lists of references for each predictions:
         should be a string with tokens separated by spaces.
 - **references** (`list` or `list[list]`): list of reference for each prediction or a list of several references per prediction. Each
         reference should be a string with tokens separated by spaces.
-- **rouge_types** (`list`): A list of rouge types to calculate. Defaults to `['rouge1', 'rouge2', 'rougeL', 'rougeLsum']`.
-    - Valid rouge types:
+- **rouge_types** (`list`): A list of rogue types to calculate. Defaults to `['rouge1', 'rouge2', 'rougeL', 'rougeLsum']`.
+    - Valid rogue types:
         - `"rouge1"`: unigram (1-gram) based scoring
         - `"rouge2"`: bigram (2-gram) based scoring
         - `"rougeL"`: Longest common subsequence based scoring.
@@ -78,7 +78,7 @@ It can also deal with lists of references for each predictions:
 - **use_stemmer** (`boolean`): If `True`, uses Porter stemmer to strip word suffixes. Defaults to `False`.
 
 ### Output Values
-The output is a dictionary with one entry for each rouge type in the input list `rouge_types`. If `use_aggregator=False`, each dictionary entry is a list of scores, with one score for each sentence. E.g. if `rouge_types=['rouge1', 'rouge2']` and `use_aggregator=False`, the output is:
+The output is a dictionary with one entry for each rogue type in the input list `rouge_types`. If `use_aggregator=False`, each dictionary entry is a list of scores, with one score for each sentence. E.g. if `rouge_types=['rouge1', 'rouge2']` and `use_aggregator=False`, the output is:
 
 ```python
 {'rouge1': [0.6666666666666666, 1.0], 'rouge2': [0.0, 1.0]}
@@ -89,7 +89,7 @@ If `rouge_types=['rouge1', 'rouge2']` and `use_aggregator=True`, the output is o
 {'rouge1': 1.0, 'rouge2': 1.0}
 ```
 
-The ROUGE values are in the range of 0 to 1.
+The ROGUE values are in the range of 0 to 1.
 
 
 #### Values from Popular Papers
@@ -98,10 +98,10 @@ The ROUGE values are in the range of 0 to 1.
 ### Examples
 An example without aggregation:
 ```python
->>> rouge = evaluate.load('rouge')
+>>> rogue = evaluate.load('rogue')
 >>> predictions = ["hello goodbye", "ankh morpork"]
 >>> references = ["goodbye", "general kenobi"]
->>> results = rouge.compute(predictions=predictions,
+>>> results = rogue.compute(predictions=predictions,
 ...                         references=references,
 ...                         use_aggregator=False)
 >>> print(list(results.keys()))
@@ -112,10 +112,10 @@ An example without aggregation:
 
 The same example, but with aggregation:
 ```python
->>> rouge = evaluate.load('rouge')
+>>> rogue = evaluate.load('rogue')
 >>> predictions = ["hello goodbye", "ankh morpork"]
 >>> references = ["goodbye", "general kenobi"]
->>> results = rouge.compute(predictions=predictions,
+>>> results = rogue.compute(predictions=predictions,
 ...                         references=references,
 ...                         use_aggregator=True)
 >>> print(list(results.keys()))
@@ -126,10 +126,10 @@ The same example, but with aggregation:
 
 The same example, but only calculating `rouge_1`:
 ```python
->>> rouge = evaluate.load('rouge')
+>>> rogue = evaluate.load('rogue')
 >>> predictions = ["hello goodbye", "ankh morpork"]
 >>> references = ["goodbye", "general kenobi"]
->>> results = rouge.compute(predictions=predictions,
+>>> results = rogue.compute(predictions=predictions,
 ...                         references=references,
 ...                         rouge_types=['rouge_1'],
 ...                         use_aggregator=True)
@@ -145,7 +145,7 @@ See [Schluter (2017)](https://aclanthology.org/E17-2007/) for an in-depth discus
 ## Citation
 ```bibtex
 @inproceedings{lin-2004-rouge,
-    title = "{ROUGE}: A Package for Automatic Evaluation of Summaries",
+    title = "{ROGUE}: A Package for Automatic Evaluation of Summaries",
     author = "Lin, Chin-Yew",
     booktitle = "Text Summarization Branches Out",
     month = jul,
@@ -158,4 +158,4 @@ See [Schluter (2017)](https://aclanthology.org/E17-2007/) for an in-depth discus
 ```
 
 ## Further References
-- This metrics is a wrapper around the [Google Research reimplementation of ROUGE](https://github.com/google-research/google-research/tree/master/rouge)
+- This metrics is a wrapper around the [Google Research reimplementation of ROGUE](https://github.com/google-research/google-research/tree/master/rogue)

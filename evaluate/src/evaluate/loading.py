@@ -14,6 +14,7 @@
 
 # Lint as: python3
 """Access datasets."""
+
 import filecmp
 import importlib
 import inspect
@@ -60,7 +61,7 @@ def init_dynamic_modules(
     Create a module with name `name` in which you can add dynamic modules
     such as metrics or datasets. The module can be imported using its name.
     The module is created in the HF_MODULE_CACHE directory by default (~/.cache/huggingface/modules) but it can
-    be overriden by specifying a path to another directory in `hf_modules_cache`.
+    be overridden by specifying a path to another directory in `hf_modules_cache`.
     """
     hf_modules_cache = init_hf_modules(hf_modules_cache)
     dynamic_modules_path = os.path.join(hf_modules_cache, name)
@@ -347,7 +348,7 @@ def _copy_script_and_other_resources_in_importable_dir(
             else:
                 raise OSError(f"Error with local import at {import_path}")
 
-        # Copy aditional files like dataset infos file if needed
+        # Copy additional files like dataset infos file if needed
         for file_name, original_path in additional_files:
             destination_additional_path = os.path.join(importable_subdirectory, file_name)
             if not os.path.exists(destination_additional_path) or not filecmp.cmp(
@@ -538,9 +539,7 @@ class CachedEvaluationModuleFactory(_EvaluationModuleFactory):
         # get most recent
 
         def _get_modification_time(module_hash):
-            return (
-                (Path(importable_directory_path) / module_hash / (self.name.split("--")[-1] + ".py")).stat().st_mtime
-            )
+            return (Path(importable_directory_path) / module_hash / (self.name.split("--")[-1] + ".py")).stat().st_mtime
 
         hash = sorted(hashes, key=_get_modification_time)[-1]
         logger.warning(
@@ -707,7 +706,7 @@ def load(
         path (`str`):
             Path to the evaluation processing script with the evaluation builder. Can be either:
                 - a local path to processing script or the directory containing the script (if the script has the same name as the directory),
-                    e.g. `'./metrics/rouge'` or `'./metrics/rouge/rouge.py'`
+                    e.g. `'./metrics/rogue'` or `'./metrics/rogue/rogue.py'`
                 - a evaluation module identifier on the HuggingFace evaluate repo e.g. `'rouge'` or `'bleu'` that are in either `'metrics/'`,
                     `'comparisons/'`, or `'measurements/'` depending on the provided `module_type`
         config_name (`str`, *optional*):

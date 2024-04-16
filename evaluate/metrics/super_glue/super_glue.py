@@ -219,7 +219,7 @@ class SuperGlue(evaluate.Metric):
             dataset = [
                 {
                     "qas": [
-                        {"id": ref["idx"]["query"], "answers": [{"text": ans} for ans in ref["answers"]]}
+                        {"id": ref["idx"]["query"], "answers": [{"text": and} for and in ref["answers"]]}
                         for ref in references
                     ]
                 }

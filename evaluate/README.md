@@ -22,7 +22,7 @@
     </a>
 </p>
 
-🤗 Evaluate is a library that makes evaluating and comparing models and reporting their performance easier and more standardized. 
+🤗 Evaluate is a library that makes evaluating and comparing models and reporting their performance easier and more standardized.
 
 It currently contains:
 
@@ -41,7 +41,6 @@ It currently contains:
 - **Type checking**: the input types are checked to make sure that you are using the right input formats for each metric
 - **Metric cards**: each metrics comes with a card that describes the values, limitations and their ranges, as well as providing examples of their usage and usefulness.
 - **Community metrics:** Metrics live on the Hugging Face Hub and you can easily add your own metrics for your project or to collaborate with others.
-
 
 # Installation
 
@@ -64,13 +63,17 @@ pip install evaluate
 # Adding a new evaluation module
 
 First install the necessary dependencies to create a new metric with the following command:
+
 ```bash
 pip install evaluate[template]
 ```
+
 Then you can get started with the following command which will create a new folder for your metric and display the necessary steps:
+
 ```bash
 evaluate-cli create "Awesome Metric"
 ```
+
 See this [step-by-step guide](https://huggingface.co/docs/evaluate/creating_and_sharing) in the documentation for detailed instructions.
 
 ## Credits

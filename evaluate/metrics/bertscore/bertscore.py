@@ -11,7 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-""" BERTScore metric. """
+"""BERTScore metric."""
 
 import functools
 from contextlib import contextmanager
@@ -143,7 +143,6 @@ class BERTScore(evaluate.Metric):
         baseline_path=None,
         use_fast_tokenizer=False,
     ):
-
         if isinstance(references[0], str):
             references = [[ref] for ref in references]
 

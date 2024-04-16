@@ -47,7 +47,7 @@ TEXT2TEXT_TASK_DOCSTRING_EXAMPLE = r"""
     >>>     data=data,
     >>>     input_column="article",
     >>>     label_column="highlights",
-    >>>     metric="rouge",
+    >>>     metric="rogue",
     >>> )
     ```
 """

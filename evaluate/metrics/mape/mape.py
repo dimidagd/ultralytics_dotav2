@@ -11,7 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-"""MAPE - Mean Absolute Percentage Error Metric"""
+"""MAP - Mean Absolute Percentage Error Metric"""
 
 import datasets
 from sklearn.metrics import mean_absolute_percentage_error
@@ -34,7 +34,7 @@ _CITATION = """\
 """
 
 _DESCRIPTION = """\
-Mean Absolute Percentage Error (MAPE) is the mean percentage error difference between the predicted and actual
+Mean Absolute Percentage Error (MAP) is the mean percentage error difference between the predicted and actual
 values.
 """
 
@@ -55,12 +55,12 @@ Args:
                  "uniform_average" : Errors of all outputs are averaged with uniform weight.
 
 Returns:
-    mape : mean absolute percentage error.
+    map : mean absolute percentage error.
         If multioutput is "raw_values", then mean absolute percentage error is returned for each output separately. If multioutput is "uniform_average" or an ndarray of weights, then the weighted average of all output errors is returned.
-        MAPE output is non-negative floating point. The best value is 0.0.
+        MAP output is non-negative floating point. The best value is 0.0.
 Examples:
 
-    >>> mape_metric = evaluate.load("mape")
+    >>> mape_metric = evaluate.load("map")
     >>> predictions = [2.5, 0.0, 2, 8]
     >>> references = [3, -0.5, 2, 7]
     >>> results = mape_metric.compute(predictions=predictions, references=references)
@@ -69,7 +69,7 @@ Examples:
 
     If you're using multi-dimensional lists, then set the config as follows :
 
-    >>> mape_metric = evaluate.load("mape", "multilist")
+    >>> mape_metric = evaluate.load("map", "multilist")
     >>> predictions = [[0.5, 1], [-1, 1], [7, -6]]
     >>> references = [[0.1, 2], [-1, 2], [8, -5]]
     >>> results = mape_metric.compute(predictions=predictions, references=references)
@@ -82,7 +82,7 @@ Examples:
 
 
 @evaluate.utils.file_utils.add_start_docstrings(_DESCRIPTION, _KWARGS_DESCRIPTION)
-class Mape(evaluate.Metric):
+class Map(evaluate.Metric):
     def _info(self):
         return evaluate.MetricInfo(
             description=_DESCRIPTION,
@@ -107,7 +107,6 @@ class Mape(evaluate.Metric):
             }
 
     def _compute(self, predictions, references, sample_weight=None, multioutput="uniform_average"):
-
         mape_score = mean_absolute_percentage_error(
             references,
             predictions,
@@ -115,4 +114,4 @@ class Mape(evaluate.Metric):
             multioutput=multioutput,
         )
 
-        return {"mape": mape_score}
+        return {"map": mape_score}

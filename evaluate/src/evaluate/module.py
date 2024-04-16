@@ -13,7 +13,8 @@
 # limitations under the License.
 
 # Lint as: python3
-""" EvaluationModule base class."""
+"""EvaluationModule base class."""
+
 import collections
 import itertools
 import os
@@ -738,7 +739,7 @@ class EvaluationModule(EvaluationModuleInfoMixin):
             sub_schema = schema[0]
             return [self._enforce_nested_string_type(sub_schema, o) for o in obj]
         elif isinstance(schema, Sequence):
-            # We allow to reverse list of dict => dict of list for compatiblity with tfds
+            # We allow to reverse list of dict => dict of list for compatibility with tfds
             if isinstance(schema.feature, dict):
                 if isinstance(obj, (list, tuple)):
                     # obj is a list of dict

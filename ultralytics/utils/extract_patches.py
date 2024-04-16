@@ -19,7 +19,7 @@ if __name__ == "__main__":
     parser.add_argument("--default-class", type=str, default=None, help="Default class")
     parser.add_argument("--debug", action="store_true", help="Enable debug mode")
     parser.add_argument("--move", action="store_true", help="Move patches instead of copying")
-    parser.add_argument("--splits", nargs="+", default=['train', 'val'], help="List of splits")
+    parser.add_argument("--splits", nargs="+", default=["train", "val"], help="List of splits")
     args = parser.parse_args()
 
     # Set up logger
@@ -27,13 +27,20 @@ if __name__ == "__main__":
 
     # Rest of the code
     input_dir = Path(args.input_dir)
-    output_dir = args.output_dir if args.output_dir else str(input_dir) + '-crops'
+    output_dir = args.output_dir if args.output_dir else str(input_dir) + "-crops"
 
     if os.path.exists(output_dir):
         logger.warning(f"{output_dir} already exists, this call will be a no-op")
         sys.exit(0)
 
-    dat = DatasetOBBExtractor(model=None, yaml_cfg=args.yaml_cfg, dataset_dir=input_dir, output_dir=None, default_class=args.default_class, debug=args.debug)
+    dat = DatasetOBBExtractor(
+        model=None,
+        yaml_cfg=args.yaml_cfg,
+        dataset_dir=input_dir,
+        output_dir=None,
+        default_class=args.default_class,
+        debug=args.debug,
+    )
     logger.info(f"Reading from {input_dir} and writing to {output_dir}")
     logger.info(f"Using YAML configuration file {args.yaml_cfg}")
     logger.info(f"Splits: {args.splits}")

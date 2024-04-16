@@ -11,7 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-""" WIKI_SPLIT metric."""
+"""WIKI_SPLIT metric."""
 
 import re
 import string
@@ -255,8 +255,7 @@ def SARIsent(ssent, csent, rsents):
 
 
 def normalize(sentence, lowercase: bool = True, tokenizer: str = "13a", return_str: bool = True):
-
-    # Normalization is requried for the ASSET dataset (one of the primary
+    # Normalization is required for the ASSET dataset (one of the primary
     # datasets in sentence simplification) to allow using space
     # to split the sentence. Even though Wiki-Auto and TURK datasets,
     # do not require normalization, we do it for consistency.
@@ -285,7 +284,6 @@ def normalize(sentence, lowercase: bool = True, tokenizer: str = "13a", return_s
 
 
 def compute_sari(sources, predictions, references):
-
     if not (len(sources) == len(predictions) == len(references)):
         raise ValueError("Sources length must match predictions and references lengths.")
     sari_score = 0

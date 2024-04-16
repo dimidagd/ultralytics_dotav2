@@ -100,7 +100,5 @@ class Accuracy(evaluate.Metric):
 
     def _compute(self, predictions, references, normalize=True, sample_weight=None):
         return {
-            "accuracy": float(
-                accuracy_score(references, predictions, normalize=normalize, sample_weight=sample_weight)
-            )
+            "accuracy": float(accuracy_score(references, predictions, normalize=normalize, sample_weight=sample_weight))
         }

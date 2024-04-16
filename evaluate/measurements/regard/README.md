@@ -8,14 +8,13 @@ sdk_version: 3.0.2
 app_file: app.py
 pinned: false
 tags:
-- evaluate
-- measurement
+  - evaluate
+  - measurement
 description: >-
   Regard aims to measure language polarity towards and social perceptions of a demographic (e.g. gender, race, sexual orientation).
 ---
 
 # Measurement Card for Regard
-
 
 ## Measurement Description
 
@@ -35,30 +34,30 @@ This measurement requires two lists of strings as input, enabling comparing the 
 ```
 
 ### Inputs
+
 - **data** (list of `str`): prediction/candidate sentences, e.g. sentences describing a given demographic group.
 - **references** (list of `str`) (optional): reference/comparison sentences, e.g. sentences describing a different demographic group to compare against.
-- **aggregation** (`str`) (optional): determines the type of aggregation performed.
-    If set to `None`, the difference between the regard scores for the two categories is returned.
-     Otherwise:
-        - `average` : returns the average regard for each category (negative, positive, neutral, other) for each group
-        - `maximum`: returns the maximum regard for each group
+- **aggregation** (`str`) (optional): determines the type of aggregation performed. If set to `None`, the difference between the regard scores for the two categories is returned. Otherwise: - `average` : returns the average regard for each category (negative, positive, neutral, other) for each group - `maximum`: returns the maximum regard for each group
 
 ### Output Values
 
 **With a single input**:
 
 `regard` : the regard scores of each string in the input list (if no aggregation is specified)
+
 ```python
 {'neutral': 0.95, 'positive': 0.02, 'negative': 0.02, 'other': 0.01}
 {'negative': 0.97, 'other': 0.02, 'neutral': 0.01, 'positive': 0.0}
 ```
 
-`average_regard`: the average regard for each category (negative, positive, neutral, other)  (if `aggregation` = `average`)
+`average_regard`: the average regard for each category (negative, positive, neutral, other) (if `aggregation` = `average`)
+
 ```python
 {'neutral': 0.48, 'positive': 0.01, 'negative': 0.5, 'other': 0.01}
 ```
 
 `max_regard`: the maximum regard across all input strings (if `aggregation` = `maximum`)
+
 ```python
 {'neutral': 0.95, 'positive': 0.024, 'negative': 0.972, 'other': 0.019}
 ```
@@ -98,6 +97,7 @@ Example 1 (single input):
 ```
 
 Example 2 (comparison mode):
+
 ```python
 >>> regard = evaluate.load("regard", "compare")
 >>> group1 = ['xyz are described as mean', 'xyz are thought of as being too ambitious']
@@ -108,6 +108,7 @@ Example 2 (comparison mode):
 ```
 
 Example 3 (returns the maximum regard score):
+
 ```python
 >>> regard = evaluate.load("regard", "compare")
 >>> group1 = ['xyz are described as mean', 'xyz are thought of as being too ambitious']
@@ -120,6 +121,7 @@ Example 3 (returns the maximum regard score):
 ```
 
 Example 4 (returns the average regard score):
+
 ```python
 >>> regard = evaluate.load("regard", "compare")
 >>> group1 = ['xyz are described as mean', 'xyz are thought of as being too ambitious']
@@ -132,15 +134,9 @@ Example 4 (returns the average regard score):
 ```
 
 ## Citation(s)
-@article{https://doi.org/10.48550/arxiv.1909.01326,
-  doi = {10.48550/ARXIV.1909.01326},
-  url = {https://arxiv.org/abs/1909.01326},
-  author = {Sheng, Emily and Chang, Kai-Wei and Natarajan, Premkumar and Peng, Nanyun},
-  title = {The Woman Worked as a Babysitter: On Biases in Language Generation},
-  publisher = {arXiv},
-  year = {2019}
-}
 
+@article{https://doi.org/10.48550/arxiv.1909.01326, doi = {10.48550/ARXIV.1909.01326}, url = {https://arxiv.org/abs/1909.01326}, author = {Sheng, Emily and Chang, Kai-Wei and Natarajan, Premkumar and Peng, Nanyun}, title = {The Woman Worked as a Babysitter: On Biases in Language Generation}, publisher = {arXiv}, year = {2019} }
 
 ## Further References
+
 - [`nlg-bias` library](https://github.com/ewsheng/nlg-bias/)

@@ -11,7 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-""" XTREME-S benchmark metric. """
+"""XTREME-S benchmark metric."""
 
 from typing import List
 
@@ -114,9 +114,7 @@ if _jiwer_available and version.parse(importlib_metadata.version("jiwer")) < ver
                     chars.append(self.sentence_delimiter)
             return chars
 
-    cer_transform = tr.Compose(
-        [tr.RemoveMultipleSpaces(), tr.Strip(), SentencesToListOfCharacters(SENTENCE_DELIMITER)]
-    )
+    cer_transform = tr.Compose([tr.RemoveMultipleSpaces(), tr.Strip(), SentencesToListOfCharacters(SENTENCE_DELIMITER)])
 elif _jiwer_available:
     cer_transform = tr.Compose(
         [
@@ -239,7 +237,6 @@ class XtremeS(evaluate.Metric):
         )
 
     def _compute(self, predictions, references, bleu_kwargs=None, wer_kwargs=None):
-
         bleu_kwargs = bleu_kwargs if bleu_kwargs is not None else {}
         wer_kwargs = wer_kwargs if wer_kwargs is not None else {}
 

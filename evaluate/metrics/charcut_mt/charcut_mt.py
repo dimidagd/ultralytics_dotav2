@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """An implementation for calculating CharCut, a character-based machine translation evaluation metric."""
+
 from typing import Iterable, Union
 
 import datasets

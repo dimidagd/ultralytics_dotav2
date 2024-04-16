@@ -13,7 +13,7 @@
 # limitations under the License.
 
 # Lint as: python3
-""" List and inspect metrics."""
+"""List and inspect metrics."""
 
 from typing import Optional
 
@@ -72,7 +72,6 @@ def list_evaluation_modules(module_type=None, include_community=True, with_detai
 
 
 def _list_evaluation_modules_type(module_type, include_community=True, with_details=False):
-
     r = requests.get(HF_LIST_ENDPOINT.format(type=module_type))
     r.raise_for_status()
     d = r.json()
@@ -115,7 +114,7 @@ def inspect_evaluation_module(
                 e.g. ``'./metrics/accuracy'`` or ``'./metrics/accuracy/accuracy.py'``
             - a dataset identifier on the Hugging Face Hub (list all available datasets and ids with ``evaluate.list_evaluation_modules()``)
                 e.g. ``'accuracy'``, ``'bleu'`` or ``'word_length'``
-        local_path (``str``): path to the local folder to copy the datset script to.
+        local_path (``str``): path to the local folder to copy the dataset script to.
         download_config (Optional ``datasets.DownloadConfig``: specific download configuration parameters.
         **download_kwargs: optional attributes for DownloadConfig() which will override the attributes in download_config if supplied.
     """

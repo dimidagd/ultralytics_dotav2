@@ -1,6 +1,6 @@
 ---
-title: Spearman Correlation Coefficient Metric 
-emoji: 🤗 
+title: Spearman Correlation Coefficient Metric
+emoji: 🤗
 colorFrom: blue
 colorTo: red
 sdk: gradio
@@ -8,8 +8,8 @@ sdk_version: 3.19.1
 app_file: app.py
 pinned: false
 tags:
-- evaluate
-- metric
+  - evaluate
+  - metric
 description: >-
   The Spearman rank-order correlation coefficient is a measure of the
   relationship between two datasets. Like other correlation coefficients,
@@ -17,10 +17,10 @@ description: >-
   Positive correlations imply that as data in dataset x increases, so
   does data in dataset y. Negative correlations imply that as x increases,
   y decreases. Correlations of -1 or +1 imply an exact monotonic relationship.
-  
+
   Unlike the Pearson correlation, the Spearman correlation does not
   assume that both datasets are normally distributed.
-  
+
   The p-value roughly indicates the probability of an uncorrelated system
   producing datasets that have a Spearman correlation at least as extreme
   as the one computed from these datasets. The p-values are not entirely
@@ -29,25 +29,16 @@ description: >-
 
 # Metric Card for Spearman Correlation Coefficient Metric (spearmanr)
 
-
 ## Metric Description
-The Spearman rank-order correlation coefficient is a measure of the
-relationship between two datasets. Like other correlation coefficients,
-this one varies between -1 and +1 with 0 implying no correlation.
-Positive correlations imply that as data in dataset x increases, so 
-does data in dataset y. Negative correlations imply that as x increases,
-y decreases. Correlations of -1 or +1 imply an exact monotonic relationship.
 
-Unlike the Pearson correlation, the Spearman correlation does not 
-assume that both datasets are normally distributed. 
+The Spearman rank-order correlation coefficient is a measure of the relationship between two datasets. Like other correlation coefficients, this one varies between -1 and +1 with 0 implying no correlation. Positive correlations imply that as data in dataset x increases, so does data in dataset y. Negative correlations imply that as x increases, y decreases. Correlations of -1 or +1 imply an exact monotonic relationship.
 
-The p-value roughly indicates the probability of an uncorrelated system
-producing datasets that have a Spearman correlation at least as extreme
-as the one computed from these datasets. The p-values are not entirely
-reliable but are probably reasonable for datasets larger than 500 or so.
+Unlike the Pearson correlation, the Spearman correlation does not assume that both datasets are normally distributed.
 
+The p-value roughly indicates the probability of an uncorrelated system producing datasets that have a Spearman correlation at least as extreme as the one computed from these datasets. The p-values are not entirely reliable but are probably reasonable for datasets larger than 500 or so.
 
 ## How to Use
+
 At minimum, this metric only requires a `list` of predictions and a `list` of references:
 
 ```python
@@ -58,22 +49,24 @@ At minimum, this metric only requires a `list` of predictions and a `list` of re
 ```
 
 ### Inputs
+
 - **`predictions`** (`list` of `float`): Predicted labels, as returned by a model.
 - **`references`** (`list` of `float`): Ground truth labels.
-- **`return_pvalue`** (`bool`): If `True`, returns the p-value. If `False`, returns
-                    only the spearmanr score. Defaults to `False`.
+- **`return_pvalue`** (`bool`): If `True`, returns the p-value. If `False`, returns only the spearmanr score. Defaults to `False`.
 
 ### Output Values
--  **`spearmanr`** (`float`): Spearman correlation coefficient.
-- **`p-value`** (`float`): p-value. **Note**: is only returned
-                        if `return_pvalue=True` is input.
+
+- **`spearmanr`** (`float`): Spearman correlation coefficient.
+- **`p-value`** (`float`): p-value. **Note**: is only returned if `return_pvalue=True` is input.
 
 If `return_pvalue=False`, the output is a `dict` with one value, as below:
+
 ```python
 {'spearmanr': -0.7}
 ```
 
 Otherwise, if `return_pvalue=True`, the output is a `dict` containing a the `spearmanr` value as well as the corresponding `pvalue`:
+
 ```python
 {'spearmanr': -0.7, 'spearmanr_pvalue': 0.1881204043741873}
 ```
@@ -84,9 +77,10 @@ The p-values can take on any value from `0` to `1`, inclusive.
 
 #### Values from Popular Papers
 
-
 ### Examples
+
 A basic example:
+
 ```python
 >>> spearmanr_metric = evaluate.load("spearmanr")
 >>> results = spearmanr_metric.compute(references=[1, 2, 3, 4, 5], predictions=[10, 9, 2.5, 6, 4])
@@ -95,6 +89,7 @@ A basic example:
 ```
 
 The same example, but that also returns the pvalue:
+
 ```python
 >>> spearmanr_metric = evaluate.load("spearmanr")
 >>> results = spearmanr_metric.compute(references=[1, 2, 3, 4, 5], predictions=[10, 9, 2.5, 6, 4], return_pvalue=True)
@@ -108,8 +103,8 @@ The same example, but that also returns the pvalue:
 
 ## Limitations and Bias
 
-
 ## Citation
+
 ```bibtex
 @book{kokoska2000crc,
   title={CRC standard probability and statistics tables and formulae},
@@ -143,4 +138,5 @@ The same example, but that also returns the pvalue:
 ```
 
 ## Further References
+
 *Add any useful further references.*

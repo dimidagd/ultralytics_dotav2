@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Exact Match metric."""
+
 import re
 import string
 
@@ -108,7 +109,6 @@ class ExactMatch(evaluate.Metric):
         ignore_punctuation=False,
         ignore_numbers=False,
     ):
-
         if regexes_to_ignore is not None:
             for s in regexes_to_ignore:
                 predictions = np.array([re.sub(s, "", x) for x in predictions])

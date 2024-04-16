@@ -7,17 +7,18 @@ from pathlib import Path
 import tempfile
 import subprocess
 
-def process_item(item, output_dir,label_transform):
+
+def process_item(item, output_dir, label_transform):
     # Create the output directory if it doesn't exist
-    
 
     # Transform the labels
-    transformed_labels = [label_transform(label) for label in item['label']]
+    transformed_labels = [label_transform(label) for label in item["label"]]
 
     # Write the transformed labels to the output file
-    output_file = Path(output_dir) / Path(item['filepath']).with_suffix('.txt').name
-    with open(output_file, 'w') as f:
+    output_file = Path(output_dir) / Path(item["filepath"]).with_suffix(".txt").name
+    with open(output_file, "w") as f:
         f.writelines(transformed_labels)
+
 
 def yolo2obb_lb_inverse(label):
     # Extract the components
@@ -33,6 +34,7 @@ def yolo2obb_lb_inverse(label):
     original_label = f"{int(class_index)} {x_center:.6f} {y_center:.6f} {width:.6f} {height:.6f}\n"
 
     return original_label
+
 
 def yolo2obb_lb(label):
     # Extract the components
@@ -54,35 +56,35 @@ def yolo2obb_lb(label):
 
     return transformed_label
 
-def transform_yolo_dota_to_obb(yolo_dota_path, output_dir, splits=['val','train'], inverse=False):
 
+def transform_yolo_dota_to_obb(yolo_dota_path, output_dir, splits=["val", "train"], inverse=False):
     label_transform = yolo2obb_lb if not inverse else yolo2obb_lb_inverse
 
     print("Transforming dataset to OBB format...")
     # Asserts contents of splits are valid
-    assert all([split in ['train', 'val'] for split in splits])
+    assert all([split in ["train", "val"] for split in splits])
     with tempfile.TemporaryDirectory() as tmpdir:
         for split in splits:
             print(f"Processing {split} split...")
             split_dir = Path(yolo_dota_path) / Path("labels") / Path(split)
             output_dir_split = Path(output_dir) / Path("labels") / Path(split)
-            split_dir_original = Path(yolo_dota_path) / Path("labels") / Path(split+'_original')
-            tmp_output_dir_split = Path(tmpdir) / Path(split+'_obb')
+            split_dir_original = Path(yolo_dota_path) / Path("labels") / Path(split + "_original")
+            tmp_output_dir_split = Path(tmpdir) / Path(split + "_obb")
             print(f"Removing {tmp_output_dir_split}...")
-            subprocess.run(["rm","-rf", str(tmp_output_dir_split), str(split_dir_original)])
+            subprocess.run(["rm", "-rf", str(tmp_output_dir_split), str(split_dir_original)])
             tmp_output_dir_split.mkdir(parents=True, exist_ok=True)
             print(f"Loading {split} split...")
             dataset = load_yolo_dota(yolo_dota_path, split=split)
             print("Split loaded. Processing items...")
 
             # Process each item in the dataset
-            
+
             for item in tqdm(dataset, desc=f"Processing items in {tmp_output_dir_split} dir"):
                 process_item(item, tmp_output_dir_split, label_transform)
             print(f"Finished processing items for {split_dir} into {tmp_output_dir_split}.")
             print(f"Moving {split_dir} to {split_dir_original}...")
             if yolo_dota_path == output_dir:
-                print(f"Moving {split_dir} to {split_dir_original}...") 
+                print(f"Moving {split_dir} to {split_dir_original}...")
                 subprocess.run(["mv", str(split_dir), str(split_dir_original)])
             print(f"Moving {tmp_output_dir_split} to {output_dir_split}...")
             subprocess.run(["mv", str(tmp_output_dir_split), str(output_dir_split)])

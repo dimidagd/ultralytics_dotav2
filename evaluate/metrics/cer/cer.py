@@ -11,7 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-""" Character Error Ratio (CER) metric. """
+"""Character Error Ratio (CER) metric."""
 
 from typing import List
 
@@ -50,9 +50,7 @@ if version.parse(importlib_metadata.version("jiwer")) < version.parse("2.3.0"):
                     chars.append(self.sentence_delimiter)
             return chars
 
-    cer_transform = tr.Compose(
-        [tr.RemoveMultipleSpaces(), tr.Strip(), SentencesToListOfCharacters(SENTENCE_DELIMITER)]
-    )
+    cer_transform = tr.Compose([tr.RemoveMultipleSpaces(), tr.Strip(), SentencesToListOfCharacters(SENTENCE_DELIMITER)])
 else:
     cer_transform = tr.Compose(
         [
