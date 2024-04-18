@@ -419,7 +419,7 @@ def read_md5list(file_path):
     return list(md5_hashes), list(file_paths)
 
 
-def attempt_download_asset(file, repo="ultralytics/assets", release="v8.1.0", **kwargs):
+def attempt_download_asset(file, repo="ultralytics/assets", release="v8.2.0", **kwargs):
     """
     Attempt to download a file from GitHub release assets if it is not found locally. The function checks for the file
     locally first, then tries to download it from the specified GitHub repository release.
@@ -427,7 +427,7 @@ def attempt_download_asset(file, repo="ultralytics/assets", release="v8.1.0", **
     Args:
         file (str | Path): The filename or file path to be downloaded.
         repo (str, optional): The GitHub repository in the format 'owner/repo'. Defaults to 'ultralytics/assets'.
-        release (str, optional): The specific release version to be downloaded. Defaults to 'v8.1.0'.
+        release (str, optional): The specific release version to be downloaded. Defaults to 'v8.2.0'.
         **kwargs (any): Additional keyword arguments for the download process.
 
     Returns:
